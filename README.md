@@ -1,1 +1,1 @@
-# 42cursus_webserv
+# 42cursus_irc
