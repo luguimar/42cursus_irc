@@ -8,6 +8,8 @@
 #include <sys/socket.h> //socket()
 #include <netinet/in.h> //sockaddr_in struct
 #include <poll.h>		//poll() & pollfd struct
+#include <fcntl.h>		//fcntl()
+#include <vector>		//vector()
 
 //server class
 class Server
@@ -15,6 +17,7 @@ class Server
 	private:
 		int	_server_port;		//-> port do server | exemplo: 8080 ( desde que esteja neste intervalo nao dara problemas (em principio) 1024 to 49151)
 		int	_server_socket_fd;	//-> fd que o socket devolve
+		std::vector<struct pollfd> fds;
 
 	public:
 		Server();
