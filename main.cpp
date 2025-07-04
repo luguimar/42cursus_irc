@@ -2,12 +2,13 @@
 
 int main(int argc, char **argv)
 {
-	//parsing
-	//argv[1] = port
-	//argv[2] = password
-	(void)argc;
-	//testing nothing serious yet!!!
-	Server server;
-
-	server.startServer(argv[1]);
+	if (argc > 1)
+	{
+		Server server;
+		server.startServer(argv[1]);
+	}
+	else
+	{
+		std::cout << "Usar uma port pelos menos password nao e precisso. exemplo de port 8080" << std::endl;
+	}
 }
