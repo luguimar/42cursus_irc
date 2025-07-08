@@ -5,7 +5,18 @@ int main(int argc, char **argv)
 	if (argc > 1)
 	{
 		Server server;
-		server.startServer(argv[1]);
+
+		try
+		{
+			signal(SIGINT, Server::SignalHandler);
+			signal(SIGQUIT, Server::SignalHandler);
+			server.startServer(argv[1]);
+		}
+		catch (std::exception &e)
+		{
+			server.closeFd();
+			std::cout << e.what() << std::endl;
+		}
 	}
 	else
 	{
