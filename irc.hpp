@@ -32,6 +32,7 @@ public:
 	void setIp(std::string ip);
 };
 
+//_c something of client
 //server class
 class Server
 {
@@ -50,6 +51,7 @@ class Server
 		void	startSocket();
 		void	newClient();
 		void	receivedData(int fd);
+		void	parseExec(int fd_c, std::string buf);
 
 		static void SignalHandler(int signum);
 

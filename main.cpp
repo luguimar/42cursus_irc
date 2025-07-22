@@ -20,6 +20,6 @@ int main(int argc, char **argv)
 	}
 	else
 	{
-		std::cout << "Usar uma port pelos menos password nao e precisso. exemplo de port 8080" << std::endl;
+		std::cout << "Usar uma port pelos menos password ainda nao e precisso. exemplo de port 8080" << std::endl;
 	}
 }
