@@ -149,7 +149,7 @@ void Server::receivedData(int fd)
 	{
 		buf[data_bytes] = '\0';
 		std::cout << "Received Data: " << buf << "."<< std::endl;
-		//parse buf e exec depending on the buf
+		//parser para a data e exe o cmd respetivo se for cmd
 		parseExec(fd, static_cast<std::string>(buf));
 	}
 }
@@ -157,14 +157,19 @@ void Server::receivedData(int fd)
 void Server::parseExec(int fd_c, std::string buf)
 {
 	(void)fd_c;
-	(void)buf;
-	/*std::string	token_value;
-	std::istream buf;
-	std::vector<std::string> tokens;*/
+	std::string	token_value;
+	std::istringstream buff(buf);
+	std::vector<std::string> tokens;
 
-	//std::getline(buf, token_value);
-	/*while(std::getline(token_value, data, ' '))
-		tokens.push_back(token_value);*/
+	while(std::getline(buff, token_value, ' '))
+		tokens.push_back(token_value);
+
+	for (int i = 0; i!= static_cast<int>(tokens[0].size()); i++)
+		tokens[0][i] = std::toupper(tokens[0][i]);
+
+	//prob vai-se fazer um index das funcoes todas para esta parte
+	if (tokens[0] == "JOIN")
+		join(fd_c, tokens);
 }
 
 void Server::closeFd()

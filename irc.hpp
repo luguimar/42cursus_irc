@@ -4,6 +4,7 @@
 //libs
 
 #include <iostream>
+#include <cctype>
 #include <vector>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -47,14 +48,20 @@ class Server
 		Server();
 		~Server();
 
+		//server
 		void	startServer(char *port);
 		void	startSocket();
 		void	newClient();
 		void	receivedData(int fd);
 		void	parseExec(int fd_c, std::string buf);
 
+		//ctrl + c etc handeler
 		static void SignalHandler(int signum);
 
+		//cmds
+		void	join(int fd_c, std::vector<std::string> cmd);
+
+		//cleaners
 		void	closeFd();
 		void	clearClient(int fd);
 };
