@@ -14,6 +14,7 @@ Server::~Server()
 
 }
 
+//getters
 Channel *Server::getChannel(const std::string &name)
 {
     for (size_t i = 0; i < _channels.size(); ++i)
@@ -30,6 +31,7 @@ Client *Server::getClientByFd(int fd)
     return NULL;
 }
 
+//sighandler so no crash
 void Server::SignalHandler(int signum)
 {
 	(void)signum;
@@ -37,8 +39,10 @@ void Server::SignalHandler(int signum)
 	_server_live = true;
 }
 
+//cmds
 void Server::join(int fd_c, std::vector<std::string> cmd)
 {
+	std::cout << "Entered Join" << std::endl;
     if (cmd.size() < 2)                               // 461 ERR_NEEDMOREPARAMS
         return (void)send(fd_c, "461 JOIN :Need more params\r\n", 31, 0);
 
@@ -47,7 +51,7 @@ void Server::join(int fd_c, std::vector<std::string> cmd)
     std::string chanName;
     while (std::getline(ss, chanName, ','))
     {
-        if (chanName.empty() || chanName[0] != '#' || chanName[0] != '&')
+        if (chanName.empty() || (chanName[0] != '#' && chanName[0] != '&'))
         {
             std::string err = "476 " + chanName + " :Bad channel name\r\n";
             send(fd_c, err.c_str(), err.length(), 0);
@@ -90,9 +94,34 @@ void Server::join(int fd_c, std::vector<std::string> cmd)
     }
 }
 
+void Server::privmsg(int fd_c, std::vector <std::string> cmd)
+{
+	std::cout << "Entered Privmsg" << std::endl;
+	if (cmd.size() < 3)
+	{
+		if(cmd.size() <= 1)
+			send(fd_c, "ERR_NORECIPIENT (411)\r\n", 25, 0);
+		else
+			send(fd_c, "ERR_NOTEXTTOSEND (412)\r\n", 26, 0);
+		return ;
+	}
+	//send(_clients[1].getFd(), cmd[2].c_str(), cmd[2].size(), 0);
+	//if its client  look for no client print error ERR_NOSUCHNICK (401) if no server ERR_NOSUCHSERVER (402)
+		//client part (neck nicknames so will not do rn)
+			//if client not online atm send RPL_AWAY (301)
+		//chanel communication (devera fazer)
+			//if channel has some restrictions and cannot send ERR_CANNOTSENDTOCHAN (404)
+	/*std::istringstream message(cmd[2]);
+	std::string target;
+
+	target = cmd[1];*/
+}
+
+//server related
 void Server::startServer(char *port)
 {
 	_server_port = std::atoi(port);//guardar a port
+	//parse to make atoi work!!!!
 	startSocket();
 
 	std::cout << "Server port: " << _server_port << "\nServer socket(fd): " << _server_socket_fd << std::endl;
@@ -217,7 +246,7 @@ void Server::receivedData(int fd)
 	else //data foi recebida com sucesso
 	{
 		buf[data_bytes] = '\0';
-		std::cout << "Received Data: " << buf << "."<< std::endl;
+		std::cout << "Received Data: " << buf << std::endl;
 		//parser para a data e exe o cmd respetivo se for cmd
 		parseExec(fd, static_cast<std::string>(buf));
 	}
@@ -225,7 +254,6 @@ void Server::receivedData(int fd)
 
 void Server::parseExec(int fd_c, std::string buf)
 {
-	(void)fd_c;
 	std::string	token_value;
 	std::istringstream buff(buf);
 	std::vector<std::string> tokens;
@@ -234,13 +262,16 @@ void Server::parseExec(int fd_c, std::string buf)
 		tokens.push_back(token_value);
 
 	for (int i = 0; i!= static_cast<int>(tokens[0].size()); i++)
-		tokens[0][i] = std::toupper(tokens[0][i]);
+			tokens[0][i] = std::toupper(tokens[0][i]);
 
 	//prob vai-se fazer um index das funcoes todas para esta parte
 	if (tokens[0] == "JOIN")
 		join(fd_c, tokens);
+	else if (tokens[0] == "PRIVMSG")
+		privmsg(fd_c, tokens);
 }
 
+//"frees"
 void Server::closeFd()
 {
 	for (size_t i = 0; i < _clients.size() ; i++)  //fechar todos os fds

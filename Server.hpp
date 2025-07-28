@@ -2,7 +2,6 @@
 #define _SERVER_HPP
 
 //libs
-
 #include <iostream>
 #include <cctype>
 #include <string>
@@ -52,6 +51,7 @@ class Server
 
 		//cmds
 		void	join(int fd_c, std::vector<std::string> cmd);
+		void	privmsg(int fd_c, std::vector<std::string> cmd);
 
 		//cleaners
 		void	closeFd();

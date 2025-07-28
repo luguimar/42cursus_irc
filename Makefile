@@ -11,7 +11,7 @@ CR		:= clear
 #                                 PROGRAM'S SRCS                               #
 ################################################################################
 
-SRCS     := main.cpp Server.cpp Client.cpp Channel.cpp
+SRCS     := Main.cpp Client.cpp Channel.cpp Server.cpp
 
 OBJS     := ${SRCS:.cpp=.o}
 
