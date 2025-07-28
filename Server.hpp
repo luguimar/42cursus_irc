@@ -19,6 +19,9 @@
 #include "Channel.hpp"
 #include "Client.hpp"
 
+class Channel; // forward declaration
+class Client;  // forward declaration
+
 //server class
 class Server
 {
