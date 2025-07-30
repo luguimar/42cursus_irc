@@ -109,19 +109,32 @@ void Server::privmsg(int fd_c, std::vector <std::string> cmd)
 	//if its client  look for no client print error ERR_NOSUCHNICK (401) if no server ERR_NOSUCHSERVER (402)
 		//client part (neck nicknames so will not do rn)
 			//if client not online atm send RPL_AWAY (301)
-		//chanel communication (devera fazer)
-			//if channel has some restrictions and cannot send ERR_CANNOTSENDTOCHAN (404)
+	//chanel communication (devera fazer)
+		//if channel has some restrictions and cannot send ERR_CANNOTSENDTOCHAN (404)
 	/*std::istringstream message(cmd[2]);
 	std::string target;
 
-	target = cmd[1];*/
+	target = cmd[1];
+
+	std::cout << message;
+
+	if (target[0] == '#' || target[0] == '&') //e um channel
+	{
+		Channel *chan_target = getChannel(target);
+		chan_target->broadcast(target, fd_c);
+	}*/
+	//else // e um client
 }
 
 //server related
 void Server::startServer(char *port)
 {
+	for (size_t i = 0; port[i]; i++)
+		if (isalnum(port[i]) != 0)
+			throw(std::runtime_error("Please try to use only numers for the port."));
+
 	_server_port = std::atoi(port);//guardar a port
-	//parse to make atoi work!!!!
+
 	startSocket();
 
 	std::cout << "Server port: " << _server_port << "\nServer socket(fd): " << _server_socket_fd << std::endl;
@@ -254,6 +267,10 @@ void Server::receivedData(int fd)
 
 void Server::parseExec(int fd_c, std::string buf)
 {
+	for (size_t i = 0; i != buf.length(); i++)
+		if (buf[i] == '\n')
+			buf[i] = ' ';
+
 	std::string	token_value;
 	std::istringstream buff(buf);
 	std::vector<std::string> tokens;
