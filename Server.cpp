@@ -111,18 +111,23 @@ void Server::privmsg(int fd_c, std::vector <std::string> cmd)
 			//if client not online atm send RPL_AWAY (301)
 	//chanel communication (devera fazer)
 		//if channel has some restrictions and cannot send ERR_CANNOTSENDTOCHAN (404)
-	/*std::istringstream message(cmd[2]);
-	std::string target;
+	std::string message;
+	std::string target = cmd[1];
 
-	target = cmd[1];
+    for (size_t i = 2; i < cmd.size(); i++)
+    {
+    	message += cmd[i];
+        if (i + 1 != cmd.size())
+          message += " ";
+    }
 
-	std::cout << message;
+    message += "\r\n";
 
 	if (target[0] == '#' || target[0] == '&') //e um channel
 	{
 		Channel *chan_target = getChannel(target);
-		chan_target->broadcast(target, fd_c);
-	}*/
+		chan_target->broadcast(message, fd_c);
+	}
 	//else // e um client
 }
 
@@ -130,7 +135,7 @@ void Server::privmsg(int fd_c, std::vector <std::string> cmd)
 void Server::startServer(char *port)
 {
 	for (size_t i = 0; port[i]; i++)
-		if (isalnum(port[i]) != 0)
+		if (isalnum(port[i]) == 0)
 			throw(std::runtime_error("Please try to use only numers for the port."));
 
 	_server_port = std::atoi(port);//guardar a port
