@@ -11,7 +11,8 @@ class Client
 		std::string _ip; 	//ip do cliente outraves (server.cpp, newClient())
 		std::string _nick;
 		std::string _user;
-
+		std::string _password;
+		bool	_auth;
 	public:
 		Client();
 		~Client();
@@ -27,6 +28,15 @@ class Client
 
 		std::string getUser();
 		void setUser(std::string user);
+
+		std::string getPass();
+		void setPass(std::string password);
+
+		bool	getAuth();
+		void setAuth(bool auth);
+
+		// need to check if it is fine and where to put it
+		void initClient();
 };
 
 #endif

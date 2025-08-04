@@ -321,4 +321,3 @@ void Server::clearClient(int fd)
 		}
 	}
 }
-

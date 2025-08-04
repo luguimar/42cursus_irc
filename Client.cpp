@@ -6,6 +6,7 @@ Client::Client()
 	_ip = "";
 	_nick = "";
 	_user = "";
+	_password = "";
 }
 
 Client::~Client()
@@ -51,4 +52,37 @@ std::string Client::getUser()
 void Client::setUser(std::string user)
 {
 	_user = user;
+}
+
+std::string Client::getPass()
+{
+	return _password;
+}
+
+void Client::setPass(std::string password)
+{
+	_password = password;
+}
+
+bool Client::getAuth()
+{
+	return _auth;
+}
+
+void Client::setAuth(bool auth)
+{
+	_auth = auth;
+}
+
+void Client::initClient()
+{
+	std::cout << "Time to set up your user!" << std::endl;
+	std::cout << "Insert nickname: ";
+	std::getline(std::cin, this->_nick);
+	std::cout << std::endl;
+	std::cout << "Insert username: ";
+	std::getline(std::cin, this->_user);
+	std::cout << std::endl;
+	std::cout << "Insert password: ";
+	std::getline(std::cin, this->_password);
 }
