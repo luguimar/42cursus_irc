@@ -153,24 +153,27 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 		return (void)send(fd_c, "ERR_NONICKNAMEGIVEN (431)\r\n", 29, 0); 
 	for (size_t i = 0; i < _clients.size(); i++)
 	{
-		if (_clients[i]._nick == cmd[1])
+		if (_clients[i].getNick() == cmd[1])
 			return (void)send(fd_c, "ERR_NICKNAMEINUSE (433)\r\n", 27, 0); 
 	}
-	if (check_nick(cmd[1].c_str)
+	if (check_nick(cmd[1].c_str()))
 		return (void)send(fd_c, "ERR_ERRONEUSNICKNAME (432)\r\n", 30, 0); 
 	for (size_t i = 0; i < _clients.size(); i++)
 	{
-		if (_clients[i]._fd == fd_c)
+		if (_clients[i].getFd() == fd_c)
 		{
-			if (_clients[i]._nick == "")
+			if (_clients[i].getNick() == "")
 			{
-				std::string msg = "Nickname successfully registered as " + cmd[1] + \r\n;
-				send(fd_c, msg, (40 + cmd[1].size()), 0);
+				std::string msg = "Nickname successfully registered as " + cmd[1] + "\r\n";
+				send(fd_c, msg.c_str(), (40 + cmd[1].size()), 0);
 			}
 			else
-				std::string msg = _clients[i]._nick + "changed his nickname to " + cmd[1] + \r\n;
-				send(fd_c, msg, (_clients[i]._nick.size() + 28 + cmd[i].size()), 0);
+			{
+				std::string msg = _clients[i].getNick() + "changed his nickname to " + cmd[1] + "\r\n";
+				send(fd_c, msg.c_str(), (_clients[i].getNick().size() + 28 + cmd[i].size()), 0);
+			}
 			_clients[i].setNick(cmd[1]);
+		}
 	}
 	// falta mandar a mensagem de sucesso pro server
 }
@@ -346,8 +349,8 @@ void Server::parseExec(int fd_c, std::string buf)
 		join(fd_c, tokens);
 	else if (tokens[0] == "PRIVMSG")
 		privmsg(fd_c, tokens);
-	else if (tokens[0] = "NICK")
-		setnick();
+	else if (tokens[0] == "NICK")
+		setnick(fd_c, tokens);
 	/*else if (tokens[0] = "USER")
 		usercmd();
 	else if (tokens[0] = "PASS")
