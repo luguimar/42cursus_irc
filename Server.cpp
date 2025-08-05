@@ -139,6 +139,7 @@ void Server::startServer(char *port)
 			throw(std::runtime_error("Please try to use only numers for the port."));
 
 	_server_port = std::atoi(port);//guardar a port
+	static int flag_newc;
 
 	startSocket();
 
@@ -156,9 +157,18 @@ void Server::startServer(char *port)
 			if (_fds[i].revents & POLLIN) //se fd tiver data para ler
 			{
 				if (_fds[i].fd == _server_socket_fd) // se for o fd da socket significa que e um novo client, se nao e data mandada pelo client
+				{
 					newClient();
+					flag_newc = 1;
+					std::cout << "Flag seted to: "<< flag_newc << std::endl;
+				}
 				else
+				{
 					receivedData(_fds[i].fd);
+					flag_newc = 0;
+					std::cout << "Flag seted to: "<< flag_newc << std::endl;
+				}
+				std::cout << "Flag Status: "<< flag_newc << std::endl;
 			}
 		}
 	}
@@ -287,6 +297,8 @@ void Server::parseExec(int fd_c, std::string buf)
 			tokens[0][i] = std::toupper(tokens[0][i]);
 
 	//prob vai-se fazer um index das funcoes todas para esta parte
+
+
 	if (tokens[0] == "JOIN")
 		join(fd_c, tokens);
 	else if (tokens[0] == "PRIVMSG")
@@ -295,6 +307,8 @@ void Server::parseExec(int fd_c, std::string buf)
 		usercmd();
 	else if (tokens[0] = "NICK")
 		nickcmd();
+	else if (tokens[0] = "PASS")
+		passcmd() */
 }
 
 //"frees"
