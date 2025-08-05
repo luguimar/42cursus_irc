@@ -74,7 +74,7 @@ void Client::setAuth(bool auth)
 	_auth = auth;
 }
 
-void Client::initClient()
+/*void Client::initClient()
 {
 	std::cout << "Time to set up your user!" << std::endl;
 	std::cout << "Insert nickname: ";
@@ -85,4 +85,4 @@ void Client::initClient()
 	std::cout << std::endl;
 	std::cout << "Insert password: ";
 	std::getline(std::cin, this->_password);
-}
+}*/
