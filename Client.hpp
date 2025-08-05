@@ -1,6 +1,7 @@
 #ifndef _CLIENT_HPP
 #define _CLIENT_HPP
 
+#include "Server.hpp"
 #include <string>
 
 //_c something of client

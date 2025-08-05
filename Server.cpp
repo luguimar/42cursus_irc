@@ -291,6 +291,10 @@ void Server::parseExec(int fd_c, std::string buf)
 		join(fd_c, tokens);
 	else if (tokens[0] == "PRIVMSG")
 		privmsg(fd_c, tokens);
+	/*else if (tokens[0] = "USER")
+		usercmd();
+	else if (tokens[0] = "NICK")
+		nickcmd();
 }
 
 //"frees"
