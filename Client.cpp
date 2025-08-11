@@ -5,6 +5,7 @@ Client::Client()
 	_fd = -1;
 	_ip = "";
 	_nick = "";
+    _old_nick = "";
 	_user = "";
 	_password = "";
 }
@@ -42,6 +43,16 @@ std::string Client::getNick()
 void Client::setNick(std::string nick)
 {
 	_nick = nick;
+}
+
+std::string Client::getOldNick()
+{
+	return _old_nick;
+}
+
+void Client::setOldNick()
+{
+	_old_nick = _nick;
 }
 
 std::string Client::getUser()
