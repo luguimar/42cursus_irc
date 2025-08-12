@@ -53,6 +53,7 @@ class Server
 		void	join(int fd_c, std::vector<std::string> cmd);
 		void	privmsg(int fd_c, std::vector<std::string> cmd);
 		void	setnick(int fd_c, std::vector<std::string> cmd);
+		void	setpass(int fd_c, std::vector<std::string> cmd);
 
 		//cleaners
 		void	closeFd();

@@ -14,6 +14,7 @@ class Client
         std::string _old_nick;
 		std::string _user;
 		std::string _password;
+        std::string _buf;
 		bool	_auth;
 
 	public:
@@ -37,6 +38,9 @@ class Client
 
 		std::string getPass();
 		void setPass(std::string password);
+
+        std::string getBuf();
+        void setBuf(std::string buf);
 
 		bool	getAuth();
 		void setAuth(bool auth);

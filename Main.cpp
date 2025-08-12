@@ -8,8 +8,8 @@ int main(int argc, char **argv)
 
 		try
 		{
-			signal(SIGINT, Server::SignalHandler);
-			signal(SIGQUIT, Server::SignalHandler);
+			/*signal(SIGINT, Server::SignalHandler);
+			signal(SIGQUIT, Server::SignalHandler);*/
 			server.startServer(argv[1]);
 		}
 		catch (std::exception &e)

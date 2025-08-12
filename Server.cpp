@@ -1,5 +1,6 @@
 #include "Server.hpp"
 
+//*-----------[YOU GET IT]-----------*//
 Server::Server()
 {
 	_server_port = -1;
@@ -14,7 +15,7 @@ Server::~Server()
 
 }
 
-//getters
+//*-----------[GETS STUFF]-----------*//
 Channel *Server::getChannel(const std::string &name)
 {
     for (size_t i = 0; i < _channels.size(); ++i)
@@ -31,7 +32,7 @@ Client *Server::getClientByFd(int fd)
     return NULL;
 }
 
-//sighandler so no crash
+//*-----------[SIG HANDLER]-----------*//
 void Server::SignalHandler(int signum)
 {
 	(void)signum;
@@ -39,7 +40,7 @@ void Server::SignalHandler(int signum)
 	_server_live = true;
 }
 
-//cmds
+//*-----------[CMD STUFF]-----------*//
 void Server::join(int fd_c, std::vector<std::string> cmd)
 {
 	std::cout << "Entered Join" << std::endl;
@@ -170,8 +171,6 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 			}
 			else
 			{
-             	/*std::string msg = ":" + _clients[i].getNick() + "!" + _clients[i].getUser(); + "@localhost " + cmd[0] + " " + cmd[1] + "\r\n";
-                std::cout << msg << std::endl;*/
 				std::string msg = _clients[i].getNick() + "changed his nickname to " + cmd[1] + "\r\n";
 				send(fd_c, msg.c_str(), (_clients[i].getNick().size() + 28 + cmd[i].size()), 0);
 			}
@@ -179,19 +178,21 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 			_clients[i].setNick(cmd[1]);
             //:Alejandro!Ale_j@localhost NICK hello2
             //:oldname!user@localhost NICK newnick
+            //std::string msg2 = ":" + _clients[i].getNick() + "!" + _clients[i].getUser(); + "@localhost " + cmd[0] + " " + cmd[1] + "\r\n";
+            //std::cout << "Msg: " << msg2 << std::endl;
 		}
 	}
 	// falta mandar a mensagem de sucesso pro server
 }
-//server related
+
+//*-----------[SERVER STUFF]-----------*//
 void Server::startServer(char *port)
 {
 	for (size_t i = 0; port[i]; i++)
 		if (isalnum(port[i]) == 0)
 			throw(std::runtime_error("Please try to use only numers for the port."));
 
-	_server_port = std::atoi(port);//guardar a port
-	static int flag_newc;
+	_server_port = std::atoi(port);
 
 	startSocket();
 
@@ -199,29 +200,21 @@ void Server::startServer(char *port)
 
 	while (Server::_server_live == false)
 	{
-		//std::cout << "a" << std::endl;
+
 		if (poll(&_fds[0], _fds.size(), -1) == -1 && Server::_server_live == false)
 			throw(std::runtime_error("The machine heart stopped."));
-		//poll: funcao para vigiar fds providos
 
-		for (size_t i = 0; i < _fds.size(); i++) //verificar todos os fds
+		for (size_t i = 0; i < _fds.size(); i++)
 		{
-			if (_fds[i].revents & POLLIN) //se fd tiver data para ler
+			if (_fds[i].revents & POLLIN)
 			{
-				if (_fds[i].fd == _server_socket_fd) // se for o fd da socket significa que e um novo client, se nao e data mandada pelo client
-				{
+				if (_fds[i].fd == _server_socket_fd)
 					newClient();
-					flag_newc = 1;
-					std::cout << "Flag seted to: "<< flag_newc << std::endl;
-				}
 				else
-				{
 					receivedData(_fds[i].fd);
-					flag_newc = 0;
-					std::cout << "Flag seted to: "<< flag_newc << std::endl;
-				}
-				std::cout << "Flag Status: "<< flag_newc << std::endl;
 			}
+            else if (_fds[i].revents & POLLOUT)
+            	parseExec(_fds[i].fd, getClientByFd(_fds[i].fd)->getBuf());
 		}
 	}
 	closeFd();
@@ -311,29 +304,29 @@ void Server::newClient()
 
 void Server::receivedData(int fd)
 {
-	char buf[1024];							// buffer para a data que vamos receber
-	memset(buf, 0, sizeof(buf));	//limpar o buffer
+	char buf[1024];
+	memset(buf, 0, sizeof(buf));
 
 	ssize_t data_bytes = recv(fd, buf, sizeof(buf) - 1, 0);
-	//a funcao recv tem como objetivo de receber a data do fd dado
 
-	if (data_bytes <= 0) //ver se algo aconteceu com o client e se sim apagar o mesmo
+	if (data_bytes <= 0)
 	{
 		std::cout << "Something happened to client." << std::endl;
 		clearClient(fd);
 		close(fd);
 	}
-	else //data foi recebida com sucesso
+	else
 	{
 		buf[data_bytes] = '\0';
-		std::cout << "Received Data: " << buf << std::endl;
-		//parser para a data e exe o cmd respetivo se for cmd
-		parseExec(fd, static_cast<std::string>(buf));
+      	Client *client = getClientByFd(fd);
+		client->setBuf(buf);
 	}
+    _fds[fd].revents = POLLOUT;
 }
 
 void Server::parseExec(int fd_c, std::string buf)
 {
+  std::cout << "ENTROU MISIERAVEL" << std::endl;
 	for (size_t i = 0; i != buf.length(); i++)
 		if (buf[i] == '\n')
 			buf[i] = ' ';
@@ -348,8 +341,8 @@ void Server::parseExec(int fd_c, std::string buf)
 	for (int i = 0; i!= static_cast<int>(tokens[0].size()); i++)
 			tokens[0][i] = std::toupper(tokens[0][i]);
 
-	//prob vai-se fazer um index das funcoes todas para esta parte
-
+    for (int i = 0; i!= static_cast<int>(tokens.size()); i++)
+			std::cout << "Token[" << i << "]: |" << tokens[i] << "|"<< std::endl;
 
 	if (tokens[0] == "JOIN")
 		join(fd_c, tokens);
@@ -357,18 +350,22 @@ void Server::parseExec(int fd_c, std::string buf)
 		privmsg(fd_c, tokens);
 	else if (tokens[0] == "NICK")
 		setnick(fd_c, tokens);
-	/*else if (tokens[0] = "USER")
+	/*else if (tokens[0] == "USER")
 		usercmd();
-	else if (tokens[0] = "PASS")
-		passcmd() */
+	else if (tokens[0] == "PASS"
+		setpass(fd_c, tokens);*/
+   /* else if (tokens[0] == "CAP")
+    	parseExec(fd_c, tokens);*/
+    else
+      std::cout << "Cmd not found." << std::endl;
 }
 
-//"frees"
+//*-----------[FREE STUFF]-----------*//
 void Server::closeFd()
 {
-	for (size_t i = 0; i < _clients.size() ; i++)  //fechar todos os fds
+	for (size_t i = 0; i < _clients.size() ; i++)
 		close(_clients[i].getFd());
-	if (_server_socket_fd != -1)				//fechar o fd do server
+	if (_server_socket_fd != -1)
 		close(_server_socket_fd);
 }
 

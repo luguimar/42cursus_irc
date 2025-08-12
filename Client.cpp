@@ -75,6 +75,16 @@ void Client::setPass(std::string password)
 	_password = password;
 }
 
+std::string Client::getBuf()
+{
+	return _buf;
+}
+
+void Client::setBuf(std::string buf)
+{
+	_buf = buf;
+}
+
 bool Client::getAuth()
 {
 	return _auth;
