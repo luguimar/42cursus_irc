@@ -22,6 +22,8 @@ void Server::setpass(int fd_c, std::vector <std::string> cmd)
 	}
     else
     	client->setPass(cmd.at(1));
+    std::cout << "Server pass: " << getServerPass() << std::endl;
+	std::cout << "Client pass: " << client->getPass() << std::endl;
 }
 
 //erro (461) not enough

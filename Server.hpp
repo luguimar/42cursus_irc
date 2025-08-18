@@ -31,6 +31,7 @@ class Server
 		std::vector<Client> _clients;
 		std::vector<struct pollfd> _fds;
 		std::vector<Channel> _channels;
+        std::string	_server_pass;
 
 		Channel *getChannel(const std::string &name);
 		Client *getClientByFd(int fd);
@@ -54,6 +55,10 @@ class Server
 		void	privmsg(int fd_c, std::vector<std::string> cmd);
 		void	setnick(int fd_c, std::vector<std::string> cmd);
 		void	setpass(int fd_c, std::vector<std::string> cmd);
+
+        //get&setter for server_password
+        std::string	getServerPass();
+        void	setServerPass(std::string pass);
 
 		//cleaners
 		void	closeFd();

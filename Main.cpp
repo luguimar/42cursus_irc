@@ -2,14 +2,17 @@
 
 int main(int argc, char **argv)
 {
-	if (argc > 1)
+	if (argc != 3)
+		std::cout << "Usage: ./ircserver <port> <pass>.\n" << std::endl;
+	else
 	{
 		Server server;
 
 		try
 		{
-			/*signal(SIGINT, Server::SignalHandler);
-			signal(SIGQUIT, Server::SignalHandler);*/
+			signal(SIGINT, Server::SignalHandler);
+			signal(SIGQUIT, Server::SignalHandler);
+			server.setServerPass(argv[2]);
 			server.startServer(argv[1]);
 		}
 		catch (std::exception &e)
@@ -17,9 +20,5 @@ int main(int argc, char **argv)
 			server.closeFd();
 			std::cout << e.what() << std::endl;
 		}
-	}
-	else
-	{
-		std::cout << "Usar uma port pelos menos password ainda nao e precisso. exemplo de port 8080" << std::endl;
 	}
 }

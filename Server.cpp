@@ -15,7 +15,7 @@ Server::~Server()
 
 }
 
-//*-----------[GETS STUFF]-----------*//
+//*-----------[GETS & SETS STUFF]-----------*//
 Channel *Server::getChannel(const std::string &name)
 {
     for (size_t i = 0; i < _channels.size(); ++i)
@@ -30,6 +30,16 @@ Client *Server::getClientByFd(int fd)
         if (_clients[i].getFd() == fd)
             return &_clients[i];
     return NULL;
+}
+
+std::string Server::getServerPass()
+{
+	return _server_pass;
+}
+
+void Server::setServerPass(std::string pass)
+{
+	_server_pass = pass;
 }
 
 //*-----------[SIG HANDLER]-----------*//
