@@ -208,11 +208,11 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 		privmsg(fd_c, tokens);
 	else if (tokens[0] == "NICK")
 		setnick(fd_c, tokens);
+    else if (tokens[0] == "PASS")
+		setpass(fd_c, tokens);
 	/*else if (tokens[0] == "USER")
 		usercmd();
-	else if (tokens[0] == "PASS"
-		setpass(fd_c, tokens);*/
-   /* else if (tokens[0] == "CAP")
+    else if (tokens[0] == "CAP")
     	parseExec(fd_c, tokens);*/
     else
       std::cout << "Cmd not found." << std::endl;

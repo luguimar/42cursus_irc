@@ -5,9 +5,9 @@ Client::Client()
 	_fd = -1;
 	_ip = "";
 	_nick = "";
-    _old_nick = "";
 	_user = "";
 	_password = "";
+    _auth = false;
 }
 
 Client::~Client()
@@ -37,6 +37,8 @@ void Client::setIp(std::string ip)
 
 std::string Client::getNick()
 {
+	if (_nick == "")
+          return "*";
 	return _nick;
 }
 

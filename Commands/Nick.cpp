@@ -42,7 +42,6 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 				std::string msg = _clients[i].getNick() + "changed his nickname to " + cmd[1] + "\r\n";
 				send(fd_c, msg.c_str(), (_clients[i].getNick().size() + 28 + cmd[i].size()), 0);
 			}
-			_clients[i].setOldNick();
 			_clients[i].setNick(cmd[1]);
 			//:Alejandro!Ale_j@localhost NICK hello2
 			//:oldname!user@localhost NICK newnick
