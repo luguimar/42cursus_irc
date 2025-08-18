@@ -40,157 +40,12 @@ void Server::SignalHandler(int signum)
 	_server_live = true;
 }
 
-//*-----------[CMD STUFF]-----------*//
-void Server::join(int fd_c, std::vector<std::string> cmd)
-{
-	std::cout << "Entered Join" << std::endl;
-    if (cmd.size() < 2)                               // 461 ERR_NEEDMOREPARAMS
-        return (void)send(fd_c, "461 JOIN :Need more params\r\n", 31, 0);
-
-    /* separar vários canais */
-    std::istringstream ss(cmd[1]);
-    std::string chanName;
-    while (std::getline(ss, chanName, ','))
-    {
-        if (chanName.empty() || (chanName[0] != '#' && chanName[0] != '&'))
-        {
-            std::string err = "476 " + chanName + " :Bad channel name\r\n";
-            send(fd_c, err.c_str(), err.length(), 0);
-            continue;
-        }
-
-        Channel *chan = getChannel(chanName);
-        if (!chan)                                    // se não existir, cria‑se
-        {
-            _channels.push_back(Channel(chanName));
-            chan = &_channels.back();
-        }
-
-		if (!chan->hasMember(fd_c)) {
-			chan->addMember(fd_c);
-
-			if (chan->getMembers().size() == 1) // ← primeiro membro
-				chan->makeOperator(fd_c);       // ← operador do canal
-		}
-		else
-			continue;	// 443 ERR_USERONCHANNEL
-
-        /* Mensagens IRC mínimas: JOIN e NAMES */
-        std::string joinMsg = ":localhost JOIN " + chanName + "\r\n";
-        chan->broadcast(joinMsg, -1);                 // avisa toda a gente
-
-        /* 353 RPL_NAMREPLY */
-        std::string names = "= " + chanName + " :";
-        for (std::set<int>::iterator it = chan->getMembers().begin();
-             it != chan->getMembers().end(); ++it)
-        {
-            Client *cl = getClientByFd(*it);
-            names += cl ? cl->getIp() + " " : "";     // ou usa nick se já tiveres
-        }
-        names += "\r\n";
-        send(fd_c, ("353 " + names).c_str(), names.length() + 4, 0);
-        /* 366 RPL_ENDOFNAMES */
-        send(fd_c, ("366 " + chanName + " :End of /NAMES list\r\n").c_str(),
-                   chanName.length() + 30, 0);
-    }
-}
-
-void Server::privmsg(int fd_c, std::vector <std::string> cmd)
-{
-	std::cout << "Entered Privmsg" << std::endl;
-	if (cmd.size() < 3)
-	{
-		if(cmd.size() <= 1)
-			send(fd_c, "ERR_NORECIPIENT (411)\r\n", 25, 0);
-		else
-			send(fd_c, "ERR_NOTEXTTOSEND (412)\r\n", 26, 0);
-		return ;
-	}
-	//send(_clients[1].getFd(), cmd[2].c_str(), cmd[2].size(), 0);
-	//if its client  look for no client print error ERR_NOSUCHNICK (401) if no server ERR_NOSUCHSERVER (402)
-		//client part (neck nicknames so will not do rn)
-			//if client not online atm send RPL_AWAY (301)
-	//chanel communication (devera fazer)
-		//if channel has some restrictions and cannot send ERR_CANNOTSENDTOCHAN (404)
-	std::string message;
-	std::string target = cmd[1];
-
-    for (size_t i = 2; i < cmd.size(); i++)
-    {
-    	message += cmd[i];
-        if (i + 1 != cmd.size())
-          message += " ";
-    }
-
-    message += "\r\n";
-
-	if (target[0] == '#' || target[0] == '&') //e um channel
-	{
-		Channel *chan_target = getChannel(target);
-		chan_target->broadcast(message, fd_c);
-	}
-	//else // e um client
-}
-
-int	check_nick(const char *nick)
-{
-	int	i;
-
-	i = -1;
-	while (nick[++i] != '\0')
-	{
-		if (nick[0] == '#' || nick[0] == '&' || nick[0] == ':' || (nick[0] >= '0' && nick[0] <= '9'))
-			return (1);
-		else if (nick[i] == ' ')
-			return (1);
-	}
-	return (0);
-}
-
-void Server::setnick(int fd_c, std::vector<std::string> cmd)
-{
-	std::cout << "Setting up nickname" << std::endl;
-	if (cmd.size() < 2)
-		return (void)send(fd_c, "ERR_NONICKNAMEGIVEN (431)\r\n", 29, 0); 
-	for (size_t i = 0; i < _clients.size(); i++)
-	{
-		if (_clients[i].getNick() == cmd[1])
-			return (void)send(fd_c, "ERR_NICKNAMEINUSE (433)\r\n", 27, 0); 
-	}
-	if (check_nick(cmd[1].c_str()))
-		return (void)send(fd_c, "ERR_ERRONEUSNICKNAME (432)\r\n", 30, 0); 
-	for (size_t i = 0; i < _clients.size(); i++)
-	{
-		if (_clients[i].getFd() == fd_c)
-		{
-			if (_clients[i].getNick() == "")
-			{
-				std::string msg = "Nickname successfully registered as " + cmd[1] + "\r\n";
-				send(fd_c, msg.c_str(), (40 + cmd[1].size()), 0);
-                _clients[i].setNick(cmd[1]);
-			}
-			else
-			{
-				std::string msg = _clients[i].getNick() + "changed his nickname to " + cmd[1] + "\r\n";
-				send(fd_c, msg.c_str(), (_clients[i].getNick().size() + 28 + cmd[i].size()), 0);
-			}
-			_clients[i].setOldNick();
-			_clients[i].setNick(cmd[1]);
-            //:Alejandro!Ale_j@localhost NICK hello2
-            //:oldname!user@localhost NICK newnick
-            //std::string msg2 = ":" + _clients[i].getNick() + "!" + _clients[i].getUser(); + "@localhost " + cmd[0] + " " + cmd[1] + "\r\n";
-            //std::cout << "Msg: " << msg2 << std::endl;
-		}
-	}
-	// falta mandar a mensagem de sucesso pro server
-}
-
 //*-----------[SERVER STUFF]-----------*//
 void Server::startServer(char *port)
 {
 	for (size_t i = 0; port[i]; i++)
 		if (isalnum(port[i]) == 0)
-			throw(std::runtime_error("Please try to use only numers for the port."));
+			throw(std::runtime_error("Please try to use only numbers for the port."));
 
 	_server_port = std::atoi(port);
 
@@ -201,7 +56,7 @@ void Server::startServer(char *port)
 	while (Server::_server_live == false)
 	{
 
-		if (poll(&_fds[0], _fds.size(), -1) == -1 && Server::_server_live == false)
+		if (poll(_fds.data(), _fds.size(), -1) == -1 && Server::_server_live == false)
 			throw(std::runtime_error("The machine heart stopped."));
 
 		for (size_t i = 0; i < _fds.size(); i++)
@@ -211,10 +66,10 @@ void Server::startServer(char *port)
 				if (_fds[i].fd == _server_socket_fd)
 					newClient();
 				else
-					receivedData(_fds[i].fd);
+					receivedData(i, _fds[i].fd);
 			}
             else if (_fds[i].revents & POLLOUT)
-            	parseExec(_fds[i].fd, getClientByFd(_fds[i].fd)->getBuf());
+            	parseExec(i,_fds[i].fd, getClientByFd(_fds[i].fd)->getBuf());
 		}
 	}
 	closeFd();
@@ -302,7 +157,7 @@ void Server::newClient()
 	std::cout << "New Client." << std::endl;
 }
 
-void Server::receivedData(int fd)
+void Server::receivedData(int id, int fd)
 {
 	char buf[1024];
 	memset(buf, 0, sizeof(buf));
@@ -311,6 +166,7 @@ void Server::receivedData(int fd)
 
 	if (data_bytes <= 0)
 	{
+		//aka disconnected client
 		std::cout << "Something happened to client." << std::endl;
 		clearClient(fd);
 		close(fd);
@@ -321,10 +177,10 @@ void Server::receivedData(int fd)
       	Client *client = getClientByFd(fd);
 		client->setBuf(buf);
 	}
-    _fds[fd].revents = POLLOUT;
+    _fds[id].events = POLLOUT;
 }
 
-void Server::parseExec(int fd_c, std::string buf)
+void Server::parseExec(int id, int fd_c, std::string buf)
 {
   std::cout << "ENTROU MISIERAVEL" << std::endl;
 	for (size_t i = 0; i != buf.length(); i++)
@@ -334,6 +190,8 @@ void Server::parseExec(int fd_c, std::string buf)
 	std::string	token_value;
 	std::istringstream buff(buf);
 	std::vector<std::string> tokens;
+
+	_fds[id].events = POLLIN;
 
 	while(std::getline(buff, token_value, ' '))
 		tokens.push_back(token_value);

@@ -43,8 +43,8 @@ class Server
 		void	startServer(char *port);
 		void	startSocket();
 		void	newClient();
-		void	receivedData(int fd);
-		void	parseExec(int fd_c, std::string buf);
+		void	receivedData(int id, int fd);
+		void	parseExec(int id, int fd_c, std::string buf);
 
 		//ctrl + c etc handeler
 		static void SignalHandler(int signum);
