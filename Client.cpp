@@ -45,16 +45,6 @@ void Client::setNick(std::string nick)
 	_nick = nick;
 }
 
-std::string Client::getOldNick()
-{
-	return _old_nick;
-}
-
-void Client::setOldNick()
-{
-	_old_nick = _nick;
-}
-
 std::string Client::getUser()
 {
 	return _user;
