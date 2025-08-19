@@ -42,6 +42,16 @@ void Server::setServerPass(std::string pass)
 	_server_pass = pass;
 }
 
+std::string Server::getServerStartTime()
+{
+	return _start_time;
+}
+
+void Server::setServerStartTime(std::time_t time)
+{
+	_start_time = std::asctime(std::localtime(&time));
+}
+
 //*-----------[SIG HANDLER]-----------*//
 void Server::SignalHandler(int signum)
 {
@@ -159,12 +169,10 @@ void Server::newClient()
 	//mesma coisa no de cima por isso nao tem razao de se explicar (linha 67, server.cpp)
 
 	client.setFd(client_fd);							//guarar o fd do client no fd do client da esrutura
-	std::cout << "Ip guardado em string: "<< inet_ntoa(client_adr.sin_addr) << std::endl;
 	client.setIp(inet_ntoa((client_adr.sin_addr)));	//guardar o ip na estrutura do client (a funcao inet_ntoa() pega num adress/ip e transforma num string e devolve)
 	_clients.push_back(client);							//guardar novo client no vector dos clients
 	_fds.push_back(new_poll);							//guardar novo poll para vigiar
-
-	std::cout << "New Client." << std::endl;
+	std::cout << "New Client" << std::endl;
 }
 
 void Server::receivedData(int id, int fd)
@@ -192,40 +200,74 @@ void Server::receivedData(int id, int fd)
 
 void Server::parseExec(int id, int fd_c, std::string buf)
 {
-  std::cout << "ENTROU MISIERAVEL" << std::endl;
-	for (size_t i = 0; i != buf.length(); i++)
-		if (buf[i] == '\n')
-			buf[i] = ' ';
-
 	std::string	token_value;
 	std::istringstream buff(buf);
+	std::vector<std::string> tokens_by_n;
 	std::vector<std::string> tokens;
 
 	_fds[id].events = POLLIN;
 
-	while(std::getline(buff, token_value, ' '))
-		tokens.push_back(token_value);
+	while(std::getline(buff, token_value, '\n'))
+		tokens_by_n.push_back(token_value);
 
-	for (int i = 0; i!= static_cast<int>(tokens[0].size()); i++)
+	for (int i = 0; i != static_cast<int>(tokens_by_n.size()) ; i++)
+	{
+		std::istringstream token_buf(tokens_by_n[i]);
+
+		while(std::getline(token_buf, token_value, ' '))
+			tokens.push_back(token_value);
+
+		for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
 			tokens[0][i] = std::toupper(tokens[0][i]);
 
-    for (int i = 0; i!= static_cast<int>(tokens.size()); i++)
+		for (int i = 0; i != static_cast<int>(tokens.size()); i++)
 			std::cout << "Token[" << i << "]: |" << tokens[i] << "|"<< std::endl;
 
-	if (tokens[0] == "JOIN")
-		join(fd_c, tokens);
-	else if (tokens[0] == "PRIVMSG")
-		privmsg(fd_c, tokens);
-	else if (tokens[0] == "NICK")
-		setnick(fd_c, tokens);
-    else if (tokens[0] == "PASS")
-		setpass(fd_c, tokens);
-	/*else if (tokens[0] == "USER")
-		usercmd();
-    else if (tokens[0] == "CAP")
-    	parseExec(fd_c, tokens);*/
-    else
-      std::cout << "Cmd not found." << std::endl;
+		if (tokens[0] == "JOIN")
+			join(fd_c, tokens);
+		else if (tokens[0] == "PRIVMSG")
+			privmsg(fd_c, tokens);
+		else if (tokens[0] == "NICK")
+			setnick(fd_c, tokens);
+		else if (tokens[0] == "PASS")
+			setpass(fd_c, tokens);
+		/*else if (tokens[0] == "USER")
+				usercmd();
+		else if (tokens[0] == "CAP")
+				parseExec(fd_c, tokens);*/
+		else
+			std::cout << "Cmd not found." << std::endl;
+		tokens.clear();
+	}
+}
+
+void Server::sendWelcomeBurst(int fd_c)
+{
+	Client *client = getClientByFd(fd_c);
+
+	std::string msg = ":localhost 001 " + client->getNick() + " :Welcome to the " + NETWORK_NAME + "Network, " + client->getNick() + "\r\n";
+	send(fd_c, msg.c_str(), msg.size(), 0);
+	msg = ":localhost 002 " + client->getNick() + " :Your host is localhost, running version " + VERSION + "\r\n";
+	send(fd_c, msg.c_str(), msg.size(), 0);
+	msg = ":localhost 003 " + client->getNick() + " :This server was created " + getServerStartTime() + "\r";
+	send(fd_c, msg.c_str(), msg.size(), 0);
+	msg = ":localhost 004 " + client->getNick() + " localhost " + VERSION + " itkol\r\n";
+	send(fd_c, msg.c_str(), msg.size(), 0);
+	msg = ":localhost 005 " + client->getNick() + " CHANMODES=i,t,k,o,l :are supported by this server\r\n";
+	send(fd_c, msg.c_str(), msg.size(), 0);
+	msg = ":localhost 375 " + client->getNick() + " :- localhost Message of the day -\r\n";
+	send(fd_c, msg.c_str(), msg.size(), 0);
+	msg =	":localhost 372 " + client->getNick() + " :- '##:::::'##:'########:'##::::::::'######:::'#######::'##::::'##:'########: -\r\n"
+			":localhost 372 " + client->getNick() + " :-  ##:'##: ##: ##.....:: ##:::::::'##... ##:'##.... ##: ###::'###: ##.....:: -\r\n"
+			":localhost 372 " + client->getNick() + " :-  ##: ##: ##: ##::::::: ##::::::: ##:::..:: ##:::: ##: ####'####: ##::::::: -\r\n"
+			":localhost 372 " + client->getNick() + " :-  ##: ##: ##: ######::: ##::::::: ##::::::: ##:::: ##: ## ### ##: ######::: -\r\n"
+			":localhost 372 " + client->getNick() + " :-  ##: ##: ##: ##...:::: ##::::::: ##::::::: ##:::: ##: ##. #: ##: ##...:::: -\r\n"
+			":localhost 372 " + client->getNick() + " :-  ##: ##: ##: ##::::::: ##::::::: ##::: ##: ##:::: ##: ##:.:: ##: ##::::::: -\r\n"
+			":localhost 372 " + client->getNick() + " :- . ###. ###:: ########: ########:. ######::. #######:: ##:::: ##: ########: -\r\n"
+			":localhost 372 " + client->getNick() + " :- :...::...:::........::........:::......::::.......:::..:::::..::........:: -\r\n";
+	send(fd_c, msg.c_str(), msg.size(), 0);
+	msg = ":localhost 376 " + client->getNick() + " :End of /MOTD command.\r\n";
+	send(fd_c, msg.c_str(), msg.size(), 0);
 }
 
 //*-----------[FREE STUFF]-----------*//

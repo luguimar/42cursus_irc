@@ -3,6 +3,7 @@
 
 //libs
 #include <iostream>
+#include <ctime>
 #include <cctype>
 #include <string>
 #include <vector>
@@ -18,6 +19,10 @@
 #include "Channel.hpp"
 #include "Client.hpp"
 
+
+#define NETWORK_NAME "IrrationalRelayCreation"
+#define VERSION "1.7.7"
+
 class Channel; // forward declaration
 class Client;  // forward declaration
 
@@ -32,6 +37,7 @@ class Server
 		std::vector<struct pollfd> _fds;
 		std::vector<Channel> _channels;
         std::string	_server_pass;
+		std::string _start_time;
 
 		Channel *getChannel(const std::string &name);
 		Client *getClientByFd(int fd);
@@ -56,9 +62,14 @@ class Server
 		void	setnick(int fd_c, std::vector<std::string> cmd);
 		void	setpass(int fd_c, std::vector<std::string> cmd);
 
-        //get&setter for server_password
+		//server auth message
+		void sendWelcomeBurst(int fd_c);
+
+        //get&setter
         std::string	getServerPass();
         void	setServerPass(std::string pass);
+		std::string	getServerStartTime();
+		void	setServerStartTime(std::time_t time);
 
 		//cleaners
 		void	closeFd();

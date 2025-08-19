@@ -13,6 +13,7 @@ int main(int argc, char **argv)
 			signal(SIGINT, Server::SignalHandler);
 			signal(SIGQUIT, Server::SignalHandler);
 			server.setServerPass(argv[2]);
+			server.setServerStartTime(std::time(NULL));
 			server.startServer(argv[1]);
 		}
 		catch (std::exception &e)

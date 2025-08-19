@@ -14,7 +14,7 @@ void Server::setpass(int fd_c, std::vector <std::string> cmd)
 		return ; // error (461)
     }
 
-	if (client->getAuth() == true)
+	if (client->getAuth())
 	{
 		error_msg += " 462 " + client->getNick() + " :You may not reregister\r\n";
 		send(fd_c, error_msg.c_str(), error_msg.size() , 0);
@@ -24,6 +24,12 @@ void Server::setpass(int fd_c, std::vector <std::string> cmd)
     	client->setPass(cmd.at(1));
     std::cout << "Server pass: " << getServerPass() << std::endl;
 	std::cout << "Client pass: " << client->getPass() << std::endl;
+	//testing welcome message
+	/*if (getServerPass() == client->getPass())
+	{
+		client->setAuth(true);
+		sendWelcomeBurst(fd_c);
+	}*/
 }
 
 //erro (461) not enough
