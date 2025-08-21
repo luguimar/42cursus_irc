@@ -49,6 +49,8 @@ void Client::setNick(std::string nick)
 
 std::string Client::getUser()
 {
+	if (_user == "")
+		return "~default";
 	return _user;
 }
 

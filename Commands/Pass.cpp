@@ -2,8 +2,6 @@
 
 void Server::setpass(int fd_c, std::vector <std::string> cmd)
 {
-	std::cout << "Entered Pass" << std::endl;
-
     std::string error_msg = ":localhost";
 	Client *client = getClientByFd(fd_c);
 

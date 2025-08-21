@@ -2,8 +2,6 @@
 
 void Server::privmsg(int fd_c, std::vector <std::string> cmd)
 {
-	std::cout << "Entered Privmsg" << std::endl;
-
 	std::string error_msg = ":localhost";
 	Client *client = getClientByFd(fd_c);
 
@@ -19,7 +17,7 @@ void Server::privmsg(int fd_c, std::vector <std::string> cmd)
 			error_msg += " 412 " + client->getNick() + " :No text to send\r\n";
 			send(fd_c, error_msg.c_str(), error_msg.size(), 0);
 		}
-		return ;
+		return;
 	}
 	//:irc.underworld.no 402 test asdasd :No such server
 	//ERR_CANNOTSENDTOCHAN (404)
@@ -48,6 +46,12 @@ void Server::privmsg(int fd_c, std::vector <std::string> cmd)
 	if (target[0] == '#' || target[0] == '&') //e um channel
 	{
 		Channel *chan_target = getChannel(target);
+		if (chan_target == NULL)
+		{
+			error_msg += " 401 " + client->getNick() + " " + target + " :No such nick/channel\r\n";
+			send(fd_c, error_msg.c_str(), error_msg.size(), 0);
+			return ;
+		}
 		chan_target->broadcast(message, fd_c);
 	}
 	else // e um client
@@ -59,7 +63,8 @@ void Server::privmsg(int fd_c, std::vector <std::string> cmd)
 			send(fd_c, error_msg.c_str(), error_msg.size(), 0);
 			return ;
 		}
-		send(client_target->getFd(), message.c_str(), message.size(), 0);
+		std::string new_message = ":" + client->getNick() + "!" + client->getUser() + "@localhost PRIVMSG " + target + " :" + message;
+		send(client_target->getFd(), new_message.c_str(), new_message.size(), 0);
 	}
 	//:hellohell!~helloh@62.48.185.7 PRIVMSG test :hello
 	//:<nick_of_sender>!<user_of_sender>@localhost <PRIVMSG> <target> :<message>
