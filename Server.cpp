@@ -32,6 +32,14 @@ Client *Server::getClientByFd(int fd)
     return NULL;
 }
 
+Client *Server::getClientByNick(std::string Nick)
+{
+	for (size_t i = 0; i < _clients.size(); ++i)
+		if (_clients[i].getNick() == Nick)
+			return &_clients[i];
+	return NULL;
+}
+
 std::string Server::getServerPass()
 {
 	return _server_pass;
@@ -214,8 +222,20 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 	{
 		std::istringstream token_buf(tokens_by_n[i]);
 
-		while(std::getline(token_buf, token_value, ' '))
-			tokens.push_back(token_value);
+		while (std::getline(token_buf, token_value, ' '))
+		{
+			if (token_value[0] == ':')
+			{
+				std::string new_token = token_value;
+				while (std::getline(token_buf, token_value, ' '))
+					new_token += ' ' + token_value;
+				new_token.erase(0, 1);
+				tokens.push_back(new_token);
+				break ;
+			}
+			else
+				tokens.push_back(token_value);
+		}
 
 		for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
 			tokens[0][i] = std::toupper(tokens[0][i]);

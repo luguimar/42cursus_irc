@@ -41,6 +41,7 @@ class Server
 
 		Channel *getChannel(const std::string &name);
 		Client *getClientByFd(int fd);
+		Client *getClientByNick(std::string nick);
 
 	public:
 		Server();
