@@ -18,6 +18,7 @@ int	check_nick(const char *nick)
 void Server::setnick(int fd_c, std::vector<std::string> cmd)
 {
 	std::cout << "Setting up nickname" << std::endl;
+
 	if (cmd.size() < 2)
 		return (void)send(fd_c, "ERR_NONICKNAMEGIVEN (431)\r\n", 29, 0);
 	for (size_t i = 0; i < _clients.size(); i++)
@@ -31,7 +32,7 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 	{
 		if (_clients[i].getFd() == fd_c)
 		{
-			if (_clients[i].getNick() == "")
+			if (_clients[i].getNick() == "*")
 			{
 				std::string msg = "Nickname successfully registered as " + cmd[1] + "\r\n";
 				send(fd_c, msg.c_str(), (40 + cmd[1].size()), 0);
@@ -50,5 +51,18 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 		}
 	}
 	// falta mandar a mensagem de sucesso pro server
+
+	//esta parte e a tal autenticacao
+	if (getClientByFd(fd_c)->getUser() != "~default" && !getClientByFd(fd_c)->getAuth())
+	{
+		if (getClientByFd(fd_c)->getPass() != _server_pass)
+		{
+			std::string error_msg = ":localhost 462 " + getClientByFd(fd_c)->getNick() + " :Password incorrect\r\n";
+			send(fd_c, error_msg.c_str(), error_msg.size() , 0);
+			return ;
+		}
+		getClientByFd(fd_c)->setAuth(true);
+		sendWelcomeBurst(fd_c);
+	}
 }
 

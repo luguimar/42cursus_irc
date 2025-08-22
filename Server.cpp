@@ -245,27 +245,31 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 			}
 		}
 
-		for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
-			tokens[0][i] = std::toupper(tokens[0][i]);
+		if (!tokens.empty())
+		{
+			for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
+				tokens[0][i] = std::toupper(tokens[0][i]);
 
-		for (int i = 0; i != static_cast<int>(tokens.size()); i++)
-			std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";
+			for (int i = 0; i != static_cast<int>(tokens.size()); i++)
+				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";
+			//printing
 
-		if (tokens[0] == "JOIN")
-			join(fd_c, tokens);
-		else if (tokens[0] == "PRIVMSG")
-			privmsg(fd_c, tokens);
-		else if (tokens[0] == "NICK")
-			setnick(fd_c, tokens);
-		else if (tokens[0] == "PASS")
-			setpass(fd_c, tokens);
-		/*else if (tokens[0] == "USER")
-				usercmd();
-		else if (tokens[0] == "CAP")
-				parseExec(fd_c, tokens);*/
-		else
-			std::cout << "Cmd not found." << std::endl;
-		tokens.clear();
+			if (tokens[0] == "JOIN")
+				join(fd_c, tokens);
+			else if (tokens[0] == "PRIVMSG")
+				privmsg(fd_c, tokens);
+			else if (tokens[0] == "NICK")
+				setnick(fd_c, tokens);
+			else if (tokens[0] == "PASS")
+				setpass(fd_c, tokens);
+			else if (tokens[0] == "USER")
+				setuser(fd_c, tokens);
+				/*else if (tokens[0] == "CAP")
+						parseExec(fd_c, tokens);*/
+			else
+				std::cout << "Cmd not found." << std::endl;
+			tokens.clear();
+		}
 	}
 }
 
