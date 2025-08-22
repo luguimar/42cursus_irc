@@ -36,6 +36,10 @@ void Server::setuser(int fd_c, std::vector<std::string> cmd)
 		{
 			std::string error_msg = ":localhost 462 " + getClientByFd(fd_c)->getNick() + " :Password incorrect\r\n";
 			send(fd_c, error_msg.c_str(), error_msg.size() , 0);
+			error_msg = "ERROR :Closing Link: localhost (Bad Password)\r\n";
+			send(fd_c, error_msg.c_str(), error_msg.size() , 0);
+			clearClient(fd_c);
+			close(fd_c);
 			return ;
 		}
 		getClientByFd(fd_c)->setAuth(true);

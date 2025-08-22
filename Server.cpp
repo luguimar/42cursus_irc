@@ -228,8 +228,10 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 	{
 		std::istringstream token_buf(tokens_by_n[i]);
 
-		while (std::getline(token_buf, token_value, ' ')) {
-			if (token_value[0] == ':') {
+		while (std::getline(token_buf, token_value, ' '))
+		{
+			if (token_value[0] == ':')
+			{
 				std::string new_token = token_value;
 				while (std::getline(token_buf, token_value, ' '))
 					new_token += ' ' + token_value;
@@ -250,9 +252,8 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 			for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
 				tokens[0][i] = std::toupper(tokens[0][i]);
 
-			for (int i = 0; i != static_cast<int>(tokens.size()); i++)
+			for (int i = 0; i != static_cast<int>(tokens.size()); i++) //printing
 				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";
-			//printing
 
 			if (tokens[0] == "JOIN")
 				join(fd_c, tokens);
@@ -264,8 +265,6 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 				setpass(fd_c, tokens);
 			else if (tokens[0] == "USER")
 				setuser(fd_c, tokens);
-				/*else if (tokens[0] == "CAP")
-						parseExec(fd_c, tokens);*/
 			else
 				std::cout << "Cmd not found." << std::endl;
 			tokens.clear();
