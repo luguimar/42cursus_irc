@@ -6,6 +6,7 @@ Client::Client()
 	_ip = "";
 	_nick = "";
 	_user = "";
+	_real = "";
 	_password = "";
     _auth = false;
 }
@@ -87,4 +88,14 @@ bool Client::getAuth()
 void Client::setAuth(bool auth)
 {
 	_auth = auth;
+}
+
+std::string Client::getReal()
+{
+	return _real;
+}
+
+void Client::setReal(std::string real)
+{
+	_real = real;
 }
