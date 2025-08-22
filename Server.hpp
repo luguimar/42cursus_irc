@@ -62,6 +62,7 @@ class Server
 		void	privmsg(int fd_c, std::vector<std::string> cmd);
 		void	setnick(int fd_c, std::vector<std::string> cmd);
 		void	setpass(int fd_c, std::vector<std::string> cmd);
+		void	setuser(int fd_c, std::vector<std::string> cmd);
 
 		//server auth message
 		void sendWelcomeBurst(int fd_c);
