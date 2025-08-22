@@ -40,9 +40,6 @@ class Client
 
 		bool	getAuth();
 		void setAuth(bool auth);
-
-		// need to check if it is fine and where to put it
-		void initClient();
 };
 
 #endif
