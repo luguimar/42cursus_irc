@@ -1,7 +1,8 @@
-#ifndef _CHANNEL_HPP
-#define _CHANNEL_HPP
+#ifndef CHANNEL_HPP
+#define CHANNEL_HPP
 
-#include "Server.hpp"
+#include <string>
+#include <set>
 
 class Channel
 {
@@ -11,7 +12,7 @@ class Channel
 		std::set<int>   _operators;
 
 	public:
-		Channel(const std::string &name) : _name(name) {}
+		explicit Channel(const std::string &name) : _name(name) {}
 
 		const std::string   &getName() const;
 		const std::set<int> &getMembers() const;
@@ -24,7 +25,7 @@ class Channel
 		void    makeOperator(int fd);
 		void    removeOperator(int fd);
 
-		/** Envia msg a todos os membros excepto quem a enviou */
+		/** Envia mensagem a todos os membros excepto quem a enviou */
 		void broadcast(const std::string &msg, int exceptFd = -1) const;
 };
 

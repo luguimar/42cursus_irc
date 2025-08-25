@@ -1,7 +1,6 @@
-#ifndef _CLIENT_HPP
-#define _CLIENT_HPP
+#ifndef CLIENT_HPP
+#define CLIENT_HPP
 
-#include "Server.hpp"
 #include <string>
 
 //_c something of client
@@ -22,32 +21,32 @@ class Client
 		Client();
 		~Client();
 
-		int getFd();
+		int getFd() const;
 		void setFd(int fd);
 
 		std::string getIp();
-		void setIp(std::string ip);
+		void setIp(const std::string& ip);
 
 		std::string getOldNick();
 		void setOldNick();
 
 		std::string getNick();
-		void setNick(std::string nick);
+		void setNick(const std::string& nick);
 
 		std::string getUser();
-		void setUser(std::string user);
+		void setUser(const std::string& user);
 
 		std::string getPass();
-		void setPass(std::string password);
+		void setPass(const std::string& password);
 
 		std::string getBuf();
-		void setBuf(std::string buf);
+		void setBuf(const std::string& buf);
 
-		bool	getAuth();
+		bool	getAuth() const;
 		void setAuth(bool auth);
 
 		std::string getReal();
-		void setReal(std::string real);
+		void setReal(const std::string& real);
 };
 
 #endif

@@ -24,7 +24,7 @@ Channel *Server::getChannel(const std::string &name)
     return NULL;
 }
 
-Client *Server::getClientByFd(int fd)
+Client *Server::getClientByFd(const int fd)
 {
     for (size_t i = 0; i < _clients.size(); ++i)
         if (_clients[i].getFd() == fd)
@@ -32,10 +32,10 @@ Client *Server::getClientByFd(int fd)
     return NULL;
 }
 
-Client *Server::getClientByNick(std::string Nick)
+Client *Server::getClientByNick(const std::string& nick)
 {
 	for (size_t i = 0; i < _clients.size(); ++i)
-		if (_clients[i].getNick() == Nick)
+		if (_clients[i].getNick() == nick)
 			return &_clients[i];
 	return NULL;
 }
@@ -45,7 +45,7 @@ std::string Server::getServerPass()
 	return _server_pass;
 }
 
-void Server::setServerPass(std::string pass)
+void Server::setServerPass(const std::string& pass)
 {
 	_server_pass = pass;
 }
@@ -55,13 +55,13 @@ std::string Server::getServerStartTime()
 	return _start_time;
 }
 
-void Server::setServerStartTime(std::time_t time)
+void Server::setServerStartTime(const std::time_t time)
 {
 	_start_time = std::asctime(std::localtime(&time));
 }
 
 //*-----------[SIG HANDLER]-----------*//
-void Server::SignalHandler(int signum)
+void Server::SignalHandler(const int signum)
 {
 	(void)signum;
 	std::cout << "Closing server." << std::endl;
@@ -76,6 +76,9 @@ void Server::startServer(char *port)
 			throw(std::runtime_error("Please try to use only numbers for the port."));
 
 	_server_port = std::atoi(port);
+
+	if (_server_port < 1024 || _server_port > 65535)
+		throw(std::runtime_error("Please try to use a port between 1024 and 65535."));
 
 	startSocket();
 
@@ -95,9 +98,10 @@ void Server::startServer(char *port)
 					newClient();
 				else
 					receivedData(i, _fds[i].fd);
+			} else if (_fds[i].revents & POLLOUT)
+			{
+				parseExec(i,_fds[i].fd, getClientByFd(_fds[i].fd)->getBuf());
 			}
-            else if (_fds[i].revents & POLLOUT)
-            	parseExec(i,_fds[i].fd, getClientByFd(_fds[i].fd)->getBuf());
 		}
 	}
 	closeFd();
@@ -106,9 +110,11 @@ void Server::startServer(char *port)
 void Server::startSocket()
 {
 	int enable = 1;
-	struct sockaddr_in server_adr;		//struct propria para guardar informacao importate sobre o address do server (normalmente usada para IPv4 (address))
-	struct pollfd new_poll;				//struct propria para ser usada com a funcao poll() que ira ajudar a trabalhar com varios fds ao mesmo tempo e tambem tem como uso vigiar os fds guardados
+	sockaddr_in server_adr = {};		//struct propria para guardar informacao importate sobre o address do server (normalmente usada para IPv4 (address))
+	pollfd new_poll = {};				//struct propria para ser usada com a funcao poll() que ira ajudar a trabalhar com varios fds ao mesmo tempo e tambem tem como uso vigiar os fds guardados
 
+	std::memset(&server_adr, 0, sizeof(server_adr));  //põe os valores da struct a 0
+	std::memset(&new_poll, 0, sizeof(new_poll));      //igual
 	server_adr.sin_family = AF_INET; 					 //int que representa o tipo de address do server 'AF_INET' indica que e IPv4
 	server_adr.sin_port = htons(_server_port); //16-bit int que guarda a port do server em "network byte order" por isso e que se usa o htons para transformar a mesma
 	server_adr.sin_addr.s_addr = INADDR_ANY; 			 //por fim o proprio address do server como nos queremos que se conecte a 'todas' usamos a flag 'INADDR_ANY'
@@ -151,8 +157,8 @@ void Server::startSocket()
 void Server::newClient()
 {
 	Client client;
-	struct sockaddr_in client_adr;
-	struct pollfd new_poll;
+	sockaddr_in client_adr = {};
+	pollfd new_poll = {};
 
 	socklen_t len = sizeof(client_adr);
 
@@ -183,12 +189,11 @@ void Server::newClient()
 	std::cout << "New Client" << std::endl;
 }
 
-void Server::receivedData(int id, int fd)
+void Server::receivedData(const size_t id, const int fd)
 {
-	char buf[1024];
-	memset(buf, 0, sizeof(buf));
+	char buf[1024] = {};
 
-	ssize_t data_bytes = recv(fd, buf, sizeof(buf) - 1, 0);
+	const ssize_t data_bytes = recv(fd, buf, sizeof(buf) - 1, 0);
 
 	if (data_bytes <= 0)
 	{
@@ -206,13 +211,13 @@ void Server::receivedData(int id, int fd)
     _fds[id].events = POLLOUT;
 }
 
-bool verify_token(std::string token)
+bool verify_token(const std::string& token)
 {
 	(void)token;
 	return true;
 }
 
-void Server::parseExec(int id, int fd_c, std::string buf)
+void Server::parseExec(int id, int fd_c, const std::string& buf)
 {
 	std::string	token_value;
 	std::istringstream buff(buf);
@@ -224,9 +229,9 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 	while(std::getline(buff, token_value, '\n'))
 		tokens_by_n.push_back(token_value);
 
-	for (int i = 0; i != static_cast<int>(tokens_by_n.size()) ; i++)
+	for (int i2 = 0; i2 != static_cast<int>(tokens_by_n.size()) ; i2++)
 	{
-		std::istringstream token_buf(tokens_by_n[i]);
+		std::istringstream token_buf(tokens_by_n[i2]);
 
 		while (std::getline(token_buf, token_value, ' '))
 		{
@@ -249,11 +254,11 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 
 		if (!tokens.empty())
 		{
-			for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
-				tokens[0][i] = std::toupper(tokens[0][i]);
+			for (int i1 = 0; i1 != static_cast<int>(tokens[0].size()); i1++)
+				tokens[0][i1] = std::toupper(tokens[0][i1]);
 
-			for (int i = 0; i != static_cast<int>(tokens.size()); i++) //printing
-				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";
+			for (i2 = 0; i2 != static_cast<int>(tokens.size()); i2++) //printing
+				std::cout << "Token[" << i2 << "]: |" << tokens[i2] << "|\r\n";
 
 			if (tokens[0] == "JOIN")
 				join(fd_c, tokens);
@@ -302,7 +307,7 @@ void Server::sendWelcomeBurst(int fd_c)
 }
 
 //*-----------[FREE STUFF]-----------*//
-void Server::closeFd()
+void Server::closeFd() const
 {
 	for (size_t i = 0; i < _clients.size() ; i++)
 		close(_clients[i].getFd());
@@ -310,7 +315,7 @@ void Server::closeFd()
 		close(_server_socket_fd);
 }
 
-void Server::clearClient(int fd)
+void Server::clearClient(const int fd)
 {
 	for (size_t i = 0; i < _fds.size(); i++)
 	{
