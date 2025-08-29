@@ -7,7 +7,7 @@ int	check_nick(const char *nick)
 	i = -1;
 	while (nick[++i] != '\0')
 	{
-		if (nick[0] == '#' || nick[0] == '&' || nick[0] == ':' || (nick[0] >= '0' && nick[0] <= '9'))
+		if (nick[0] == '#' || nick[0] == '&' || nick[0] == ':' || nick[0] == '*' || (nick[0] >= '0' && nick[0] <= '9'))
 			return (1);
 		else if (nick[i] == ' ')
 			return (1);
