@@ -1,5 +1,5 @@
-#ifndef _SERVER_HPP
-#define _SERVER_HPP
+#ifndef SERVER_HPP
+#define SERVER_HPP
 
 //libs
 #include <iostream>

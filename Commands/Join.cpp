@@ -3,19 +3,25 @@
 void Server::join(int fd_c, std::vector<std::string> cmd)
 {
 	std::cout << "Entered Join" << std::endl;
-	if (cmd.size() < 2)                               // 461 ERR_NEEDMOREPARAMS
-		return (void)send(fd_c, "461 JOIN :Need more params\r\n", 31, 0);
+	Client *client = getClientByFd(fd_c);
 
+	if (cmd.size() < 2)                               // 461 ERR_NEEDMOREPARAMS
+    {
+		std::string error_msg = ":localhost 461 " + client->getNick() + " JOIN :Not enough arguments\r\n";
+		send(fd_c, error_msg.c_str(), error_msg.size() , 0);
+        return ;
+    }
 	/* separar vários canais */
 	std::istringstream ss(cmd[1]);
 	std::string chanName;
+
 	while (std::getline(ss, chanName, ','))
 	{
 		if (chanName.empty() || (chanName[0] != '#' && chanName[0] != '&'))
 		{
-			std::string err = "476 " + chanName + " :Bad channel name\r\n";
-			send(fd_c, err.c_str(), err.length(), 0);
-			continue;
+			std::string error_msg = ":localhost 476 " + client->getNick() + " " + chanName + " :Bad Channel Mask\r\n";
+			send(fd_c, error_msg.c_str(), error_msg.size() , 0);
+			return ;
 		}
 
 		Channel *chan = getChannel(chanName);
@@ -52,4 +58,5 @@ void Server::join(int fd_c, std::vector<std::string> cmd)
 		send(fd_c, ("366 " + chanName + " :End of /NAMES list\r\n").c_str(),
 			 chanName.length() + 30, 0);
 	}
+
 }
