@@ -3,7 +3,7 @@
 ################################################################################
 
 NAME		:=  ircserv
-CC		:= c++ -g
+CC		:= c++
 FLAGS		:= -Wall -Wextra -Werror -std=c++98
 CR		:= clear
 
@@ -11,7 +11,7 @@ CR		:= clear
 #                                 PROGRAM'S SRCS                               #
 ################################################################################
 
-SRCS     := main.cpp Client.cpp Channel.cpp Server.cpp \
+SRCS     := Main.cpp Client.cpp Channel.cpp Server.cpp \
 			Commands/Join.cpp Commands/Nick.cpp Commands/Privmsg.cpp Commands/Pass.cpp Commands/User.cpp
 
 OBJS     := ${SRCS:.cpp=.o}

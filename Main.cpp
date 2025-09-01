@@ -1,9 +1,9 @@
 #include "Server.hpp"
 
-int main(const int argc, char **argv)
+int main(int argc, char **argv)
 {
 	if (argc != 3)
-		std::cout << "Usage: ./ircserv <port> <pass>.\n" << std::endl;
+		std::cout << "Usage: ./ircserver <port> <pass>.\n" << std::endl;
 	else
 	{
 		Server server;

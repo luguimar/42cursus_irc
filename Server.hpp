@@ -1,12 +1,11 @@
-#ifndef SERVER_HPP
-#define SERVER_HPP
+#ifndef _SERVER_HPP
+#define _SERVER_HPP
 
 //libs
 #include <iostream>
 #include <ctime>
 #include <cctype>
 #include <string>
-#include <sstream>
 #include <vector>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -16,8 +15,7 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <csignal>
-#include <cstring>
-#include <cstdlib>
+#include <bits/stdc++.h>
 #include "Channel.hpp"
 #include "Client.hpp"
 
@@ -43,7 +41,7 @@ class Server
 
 		Channel *getChannel(const std::string &name);
 		Client *getClientByFd(int fd);
-		Client *getClientByNick(const std::string& nick);
+		Client *getClientByNick(std::string nick);
 
 	public:
 		Server();
@@ -53,8 +51,8 @@ class Server
 		void	startServer(char *port);
 		void	startSocket();
 		void	newClient();
-		void	receivedData(size_t id, int fd);
-		void	parseExec(int id, int fd_c, const std::string& buf);
+		void	receivedData(int id, int fd);
+		void	parseExec(int id, int fd_c, std::string buf);
 
 		//ctrl + c etc handeler
 		static void SignalHandler(int signum);
@@ -71,12 +69,12 @@ class Server
 
         //get&setter
         std::string	getServerPass();
-        void	setServerPass(const std::string& pass);
+        void	setServerPass(std::string pass);
 		std::string	getServerStartTime();
 		void	setServerStartTime(std::time_t time);
 
 		//cleaners
-		void	closeFd() const;
+		void	closeFd();
 		void	clearClient(int fd);
 };
 
