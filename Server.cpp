@@ -259,8 +259,8 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 			for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
 				tokens[0][i] = std::toupper(tokens[0][i]);
 
-			/*for (int i = 0; i != static_cast<int>(tokens.size()); i++) //printing
-				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";*/
+			for (int i = 0; i != static_cast<int>(tokens.size()); i++) //printing
+				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";
 
 			if (tokens[0] == "JOIN")
 				join(fd_c, tokens);
