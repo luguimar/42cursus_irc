@@ -17,17 +17,25 @@ int	check_nick(const char *nick)
 
 void Server::setnick(int fd_c, std::vector<std::string> cmd)
 {
+	std::string	error_msg;
+	Client *client = getClientByFd(fd_c);
 	std::cout << "Setting up nickname" << std::endl;
 
 	if (cmd.size() < 2)
-		return (void)send(fd_c, "ERR_NONICKNAMEGIVEN (431)\r\n", 29, 0);
-	for (size_t i = 0; i < _clients.size(); i++)
 	{
-		if (_clients[i].getNick() == cmd[1])
-			return (void)send(fd_c, "ERR_NICKNAMEINUSE (433)\r\n", 27, 0);
+		error_msg = ":localhost 431 " + client->getNick() + " :No nickname given\r\n";
+		return (void)send(fd_c, error_msg.c_str(), error_msg.size(), 0);
+	}
+	if (client->getNick() == cmd[1])
+	{
+		error_msg = ":localhost 433 " + client->getNick() + " " + cmd[1] + " :Nickname is already in use\r\n";
+		return (void)send(fd_c, error_msg.c_str(), error_msg.size(), 0);
 	}
 	if (check_nick(cmd[1].c_str()))
-		return (void)send(fd_c, "ERR_ERRONEUSNICKNAME (432)\r\n", 30, 0);
+	{
+		error_msg = ":localhost 432 " + client->getNick() + " " + cmd[1] + " :Erroneus nickname\r\n";
+		return (void)send(fd_c, error_msg.c_str(), error_msg.size(), 0);
+	}
 	for (size_t i = 0; i < _clients.size(); i++)
 	{
 		if (_clients[i].getFd() == fd_c)
