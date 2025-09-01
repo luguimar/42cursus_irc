@@ -206,9 +206,16 @@ void Server::receivedData(int id, int fd)
     _fds[id].events = POLLOUT;
 }
 
-bool verify_token(std::string token)
+bool verify_token(std::string *token)
 {
-	(void)token;
+	for (int i = 0; i < static_cast<int>(token->size()); i++)
+    {
+		if (token->at(i) == 13)
+        {
+                  token->erase(token->begin() + i);
+                  return true;
+        }
+    }
 	return true;
 }
 
@@ -236,13 +243,13 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 				while (std::getline(token_buf, token_value, ' '))
 					new_token += ' ' + token_value;
 				new_token.erase(0, 1);
-				if (verify_token(new_token))
+				if (verify_token(&token_value))
 					tokens.push_back(new_token);
 				break ;
 			}
 			else
 			{
-				if (verify_token(token_value))
+				if (verify_token(&token_value))
 					tokens.push_back(token_value);
 			}
 		}
@@ -252,8 +259,8 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 			for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
 				tokens[0][i] = std::toupper(tokens[0][i]);
 
-			for (int i = 0; i != static_cast<int>(tokens.size()); i++) //printing
-				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";
+			/*for (int i = 0; i != static_cast<int>(tokens.size()); i++) //printing
+				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";*/
 
 			if (tokens[0] == "JOIN")
 				join(fd_c, tokens);

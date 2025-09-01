@@ -32,6 +32,7 @@ void Server::setuser(int fd_c, std::vector<std::string> cmd)
 	//esta parte e a tal autenticacao
 	if (getClientByFd(fd_c)->getNick() != "*" && !getClientByFd(fd_c)->getAuth())
 	{
+        std::cout << "user.pass: |" << getClientByFd(fd_c)->getPass().size() << "|\nserv.pass: " << _server_pass << std::endl;
 		if (getClientByFd(fd_c)->getPass() != _server_pass)
 		{
 			std::string error_msg = ":localhost 462 " + getClientByFd(fd_c)->getNick() + " :Password incorrect\r\n";
