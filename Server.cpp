@@ -222,11 +222,25 @@ bool verify_token(std::string *token)
 void Server::parseExec(int id, int fd_c, std::string buf)
 {
 	std::string	token_value;
-	std::istringstream buff(buf);
+	std::istringstream buff;
 	std::vector<std::string> tokens_by_n;
 	std::vector<std::string> tokens;
 
 	_fds[id].events = POLLIN;
+
+	if (buf.find('\n') == std::string::npos)
+	{
+			getClientByFd(fd_c)->setBufSaver(buf, true);
+			return ;
+	}
+	else if (!getClientByFd(fd_c)->getBufSaver().empty())
+	{
+		getClientByFd(fd_c)->setBufSaver(buf, true);
+		buff.str(getClientByFd(fd_c)->getBufSaver());
+		getClientByFd(fd_c)->setBufSaver("", false);
+	}
+	else
+		buff.str(buf);
 
 	while(std::getline(buff, token_value, '\n'))
 		tokens_by_n.push_back(token_value);

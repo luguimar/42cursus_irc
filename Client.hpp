@@ -11,11 +11,11 @@ class Client
 		int	_fd;		 	//fd do client ou neste caso o fd que representa a socket do cliente ligada so servidor (server.cpp, newClient()) mas sobre
 		std::string _ip; 	//ip do cliente outraves (server.cpp, newClient())
 		std::string _nick;
-		std::string _old_nick;
 		std::string _user;
 		std::string _real;
 		std::string _password;
 		std::string _buf;
+		std::string _buf_saver;
 		bool	_auth;
 
 	public:
@@ -27,9 +27,6 @@ class Client
 
 		std::string getIp();
 		void setIp(std::string ip);
-
-		std::string getOldNick();
-		void setOldNick();
 
 		std::string getNick();
 		void setNick(std::string nick);
@@ -48,6 +45,10 @@ class Client
 
 		std::string getReal();
 		void setReal(std::string real);
+
+		std::string getBufSaver();
+		void setBufSaver(std::string buf, bool flag);
+		//bool, true = add,  false = reset
 };
 
 #endif

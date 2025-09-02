@@ -99,3 +99,16 @@ void Client::setReal(std::string real)
 {
 	_real = real;
 }
+
+std::string Client::getBufSaver()
+{
+	return _buf_saver;
+}
+
+void Client::setBufSaver(std::string buf, bool flag)
+{
+	if (flag)
+		_buf_saver += buf;
+	else
+		_buf_saver = buf;
+}
