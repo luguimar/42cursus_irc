@@ -46,42 +46,6 @@ void Server::join(int fd_c, std::vector<std::string> cmd)
             continue;
         }
 
-		/*
-		//Mensagens IRC mínimas: JOIN e NAMES
-		std::string joinMsg = ":localhost JOIN " + chanName + "\r\n";
-		chan->broadcast(joinMsg, -1);                 // avisa toda a gente
-
-		//353 RPL_NAMREPLY
-		std::string names = "= " + chanName + " :";
-		for (std::set<int>::iterator it = chan->getMembers().begin();
-			 it != chan->getMembers().end(); ++it)
-		{
-			Client *cl = getClientByFd(*it);
-			names += cl ? cl->getIp() + " " : "";     // ou usa nick se já tiveres
-		}
-		names += "\r\n";
-		send(fd_c, ("353 " + names).c_str(), names.length() + 4, 0);
-		//366 RPL_ENDOFNAMES
-		send(fd_c, ("366 " + chanName + " :End of /NAMES list\r\n").c_str(),
-			 chanName.length() + 30, 0);
-		*/
-		/*std::string new_message = ":" + client->getNick() + "!" + client->getUser() + "@localhost JOIN :" + chanName + "\r\n";
-		send(fd_c, new_message.c_str(), new_message.size() , 0);
-		//if para a mensagem embaixo que falta
-		new_message = ":localhost 332" + client->getNick() + " " + chanName + ":Topic\r\n";
-		send(fd_c, new_message.c_str(), new_message.size() , 0);
-		//uma forma de conseguir o prefix dos membros a lista dos mesmo membros e mudar o igual para o que esta embaixo quando conseguir fazer o memsmo
-		new_message = ":localhost 353" + client->getNick() + " = " + chanName + ":Clients\r\n";
-		send(fd_c, new_message.c_str(), new_message.size() , 0);
-		new_message = ":localhost 366" + client->getNick() + " " + chanName + ":End of /NAMES list\r\n";
-		send(fd_c, new_message.c_str(), new_message.size() , 0);*/
-		//:nick!user@localhost JOIN :channelname
-		//does channel have topic?
-		//:localhost 332 nick_c #channelname :"Topic"
-		//:localhost 353 nick_c =/* #channelname :alice @dan
-		//if channels is setted to inv its * if not = | for member only add @ if its an operator and always first user joining and then list
-		//:localhost 366 nick_c #channelname :End of /NAMES list
-
         // obter/criar canal
         Channel *chan = getChannel(chanName);
         if (!chan) {
@@ -129,7 +93,7 @@ void Server::join(int fd_c, std::vector<std::string> cmd)
         chan->clearInvite(client->getNick());
 
         // Prefixo do utilizador (se não tiveres user/host reais, usa placeholders)
-        const std::string prefix = ":" + client->getNick() + "!user@host ";
+        const std::string prefix = ":" + client->getNick() + "!" + client->getUser() + "@localhost ";
 
         // Broadcast do JOIN (inclui o próprio; é aceitável)
         {
@@ -137,11 +101,25 @@ void Server::join(int fd_c, std::vector<std::string> cmd)
             chan->broadcast(joinMsg, -1);
         }
 
+		//		//new_message = ":localhost 332" + client->getNick() + " " + chanName + ":Topic\r\n";
+		//send(fd_c, new_message.c_str(), new_message.size() , 0);
+		//:localhost 332 nick_c #channelname :"Topic"
+
+		// 332
+		{
+			if (!chan->getTopic().empty())
+			{
+				std::string message = ":localhost 332 " + client->getNick() + " " + chanName + " :" + chan->getTopic() + "\r\n";
+				send(fd_c, message.c_str(), message.size() , 0);
+			}
+		}
+
         // 353 RPL_NAMREPLY (enviado ao cliente que entrou)
         {
             std::string names = ":localhost 353 " + client->getNick() + " = " + chanName + " :";
             const std::set<int> &m = chan->getMembers();
-            for (std::set<int>::const_iterator it = m.begin(); it != m.end(); ++it) {
+            for (std::set<int>::const_iterator it = m.begin(); it != m.end(); ++it)
+			{
                 Client *cl = getClientByFd(*it);
                 if (!cl) continue;
                 if (chan->isOperator(*it)) names += "@";
