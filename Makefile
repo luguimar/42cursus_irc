@@ -12,7 +12,8 @@ CR		:= clear
 ################################################################################
 
 SRCS     := main.cpp Client.cpp Channel.cpp Server.cpp \
-			Commands/Join.cpp Commands/Nick.cpp Commands/Privmsg.cpp Commands/Pass.cpp Commands/User.cpp
+			Commands/Join.cpp Commands/Nick.cpp Commands/Privmsg.cpp Commands/Pass.cpp Commands/User.cpp \
+			Commands/Mode.cpp Commands/Topic.cpp Commands/Kick.cpp Commands/Invite.cpp Commands/Quit.cpp
 
 OBJS     := ${SRCS:.cpp=.o}
 

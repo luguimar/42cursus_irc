@@ -6,7 +6,6 @@
 #include <ctime>
 #include <cctype>
 #include <string>
-#include <sstream>
 #include <vector>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -16,8 +15,7 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <csignal>
-#include <cstring>
-#include <cstdlib>
+#include <bits/stdc++.h>
 #include "Channel.hpp"
 #include "Client.hpp"
 
@@ -43,7 +41,21 @@ class Server
 
 		Channel *getChannel(const std::string &name);
 		Client *getClientByFd(int fd);
-		Client *getClientByNick(const std::string& nick);
+		Client *getClientByNick(std::string nick);
+
+		int         fdByNick(const std::string& nick);
+		std::string nickByFd(int fd);
+		void        sendNumeric(int fd, int code, const std::string& params, const std::string& trailing);
+		std::string userPrefix(int fd); // ":nick!user@localhost "
+
+		void        mode(int fd_c, const std::vector<std::string>& cmd);
+		void        invite(int fd_c, const std::vector<std::string>& cmd);
+		void        kick(int fd_c, const std::vector<std::string>& cmd);
+		void        topic(int fd_c, const std::vector<std::string>& cmd);
+
+		// (opcional recomendado)
+		// void        part(int fd_c, const std::vector<std::string>& cmd);
+		// void        notice(int fd_c, const std::vector<std::string>& cmd);
 
 	public:
 		Server();
@@ -53,8 +65,8 @@ class Server
 		void	startServer(char *port);
 		void	startSocket();
 		void	newClient();
-		void	receivedData(size_t id, int fd);
-		void	parseExec(int id, int fd_c, const std::string& buf);
+		void	receivedData(int id, int fd);
+		void	parseExec(int id, int fd_c, std::string buf);
 
 		//ctrl + c etc handeler
 		static void SignalHandler(int signum);
@@ -65,19 +77,25 @@ class Server
 		void	setnick(int fd_c, std::vector<std::string> cmd);
 		void	setpass(int fd_c, std::vector<std::string> cmd);
 		void	setuser(int fd_c, std::vector<std::string> cmd);
+		void	quit(int fd_c, std::string message);
 
 		//server auth message
 		void sendWelcomeBurst(int fd_c);
 
         //get&setter
         std::string	getServerPass();
-        void	setServerPass(const std::string& pass);
+        void	setServerPass(std::string pass);
 		std::string	getServerStartTime();
 		void	setServerStartTime(std::time_t time);
 
 		//cleaners
-		void	closeFd() const;
+		void	closeFd();
 		void	clearClient(int fd);
+
+
+		void ping_cmd(int fd_c, const std::vector<std::string>& cmd);
+		void pong_cmd(int fd_c, const std::vector<std::string>& cmd);
+		void heartbeat();
 };
 
 #endif

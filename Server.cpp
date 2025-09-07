@@ -24,7 +24,7 @@ Channel *Server::getChannel(const std::string &name)
     return NULL;
 }
 
-Client *Server::getClientByFd(const int fd)
+Client *Server::getClientByFd(int fd)
 {
     for (size_t i = 0; i < _clients.size(); ++i)
         if (_clients[i].getFd() == fd)
@@ -32,10 +32,10 @@ Client *Server::getClientByFd(const int fd)
     return NULL;
 }
 
-Client *Server::getClientByNick(const std::string& nick)
+Client *Server::getClientByNick(std::string Nick)
 {
 	for (size_t i = 0; i < _clients.size(); ++i)
-		if (_clients[i].getNick() == nick)
+		if (_clients[i].getNick() == Nick)
 			return &_clients[i];
 	return NULL;
 }
@@ -45,7 +45,7 @@ std::string Server::getServerPass()
 	return _server_pass;
 }
 
-void Server::setServerPass(const std::string& pass)
+void Server::setServerPass(std::string pass)
 {
 	_server_pass = pass;
 }
@@ -55,13 +55,13 @@ std::string Server::getServerStartTime()
 	return _start_time;
 }
 
-void Server::setServerStartTime(const std::time_t time)
+void Server::setServerStartTime(std::time_t time)
 {
 	_start_time = std::asctime(std::localtime(&time));
 }
 
 //*-----------[SIG HANDLER]-----------*//
-void Server::SignalHandler(const int signum)
+void Server::SignalHandler(int signum)
 {
 	(void)signum;
 	std::cout << "Closing server." << std::endl;
@@ -77,9 +77,6 @@ void Server::startServer(char *port)
 
 	_server_port = std::atoi(port);
 
-	if (_server_port < 1024 || _server_port > 65535)
-		throw(std::runtime_error("Please try to use a port between 1024 and 65535."));
-
 	startSocket();
 
 	std::cout << "Server port: " << _server_port << "\nServer socket(fd): " << _server_socket_fd << std::endl;
@@ -92,17 +89,27 @@ void Server::startServer(char *port)
 
 		for (size_t i = 0; i < _fds.size(); i++)
 		{
-			if (_fds[i].revents & POLLIN)
-			{
-				if (_fds[i].fd == _server_socket_fd)
-					newClient();
-				else
-					receivedData(i, _fds[i].fd);
-			} else if (_fds[i].revents & POLLOUT)
-			{
-				parseExec(i,_fds[i].fd, getClientByFd(_fds[i].fd)->getBuf());
+			if (_fds[i].revents & POLLIN) {
+			    if (_fds[i].fd == _server_socket_fd) newClient();
+			    else {
+			        receivedData(i, _fds[i].fd);
+			        // processa imediatamente após receber (sem depender de POLLOUT)
+			        Client* c = getClientByFd(_fds[i].fd);
+			        if (c)
+			        {
+				        parseExec(i, _fds[i].fd, c->getBuf());
+                        if (getClientByFd(_fds[i].fd))
+			        	    c->setBuf("");
+			        }
+				}
 			}
 		}
+		    static time_t lastBeat = 0;
+			time_t now = std::time(NULL);
+		    if (now - lastBeat >= 5) {
+		        heartbeat();          // manda PING a todos os clientes
+		        lastBeat = now;
+		    }
 	}
 	closeFd();
 }
@@ -110,11 +117,9 @@ void Server::startServer(char *port)
 void Server::startSocket()
 {
 	int enable = 1;
-	sockaddr_in server_adr = {};		//struct propria para guardar informacao importate sobre o address do server (normalmente usada para IPv4 (address))
-	pollfd new_poll = {};				//struct propria para ser usada com a funcao poll() que ira ajudar a trabalhar com varios fds ao mesmo tempo e tambem tem como uso vigiar os fds guardados
+	struct sockaddr_in server_adr;		//struct propria para guardar informacao importate sobre o address do server (normalmente usada para IPv4 (address))
+	struct pollfd new_poll;				//struct propria para ser usada com a funcao poll() que ira ajudar a trabalhar com varios fds ao mesmo tempo e tambem tem como uso vigiar os fds guardados
 
-	std::memset(&server_adr, 0, sizeof(server_adr));  //põe os valores da struct a 0
-	std::memset(&new_poll, 0, sizeof(new_poll));      //igual
 	server_adr.sin_family = AF_INET; 					 //int que representa o tipo de address do server 'AF_INET' indica que e IPv4
 	server_adr.sin_port = htons(_server_port); //16-bit int que guarda a port do server em "network byte order" por isso e que se usa o htons para transformar a mesma
 	server_adr.sin_addr.s_addr = INADDR_ANY; 			 //por fim o proprio address do server como nos queremos que se conecte a 'todas' usamos a flag 'INADDR_ANY'
@@ -157,8 +162,8 @@ void Server::startSocket()
 void Server::newClient()
 {
 	Client client;
-	sockaddr_in client_adr = {};
-	pollfd new_poll = {};
+	struct sockaddr_in client_adr;
+	struct pollfd new_poll;
 
 	socklen_t len = sizeof(client_adr);
 
@@ -189,18 +194,18 @@ void Server::newClient()
 	std::cout << "New Client" << std::endl;
 }
 
-void Server::receivedData(const size_t id, const int fd)
+void Server::receivedData(int id, int fd)
 {
-	char buf[1024] = {};
+	char buf[1024];
+	memset(buf, 0, sizeof(buf));
 
-	const ssize_t data_bytes = recv(fd, buf, sizeof(buf) - 1, 0);
+	ssize_t data_bytes = recv(fd, buf, sizeof(buf) - 1, 0);
 
 	if (data_bytes <= 0)
 	{
 		//aka disconnected client
 		std::cout << "Something happened to client." << std::endl;
-		clearClient(fd);
-		close(fd);
+        quit(fd, "Client disconnected.\r\n");
 	}
 	else
 	{
@@ -208,30 +213,51 @@ void Server::receivedData(const size_t id, const int fd)
       	Client *client = getClientByFd(fd);
 		client->setBuf(buf);
 	}
-    _fds[id].events = POLLOUT;
+	_fds[id].events = POLLIN;
 }
 
-bool verify_token(const std::string& token)
+bool verify_token(std::string *token)
 {
-	(void)token;
+	for (int i = 0; i < static_cast<int>(token->size()); i++)
+    {
+		if (token->at(i) == 13)
+        {
+                  token->erase(token->begin() + i);
+                  return true;
+        }
+    }
 	return true;
 }
 
-void Server::parseExec(int id, int fd_c, const std::string& buf)
+void Server::parseExec(int id, int fd_c, std::string buf)
 {
 	std::string	token_value;
-	std::istringstream buff(buf);
+	std::istringstream buff;
 	std::vector<std::string> tokens_by_n;
 	std::vector<std::string> tokens;
 
 	_fds[id].events = POLLIN;
 
+	if (buf.find('\n') == std::string::npos)
+	{
+			getClientByFd(fd_c)->setBufSaver(buf, true);
+			return ;
+	}
+	else if (!getClientByFd(fd_c)->getBufSaver().empty())
+	{
+		getClientByFd(fd_c)->setBufSaver(buf, true);
+		buff.str(getClientByFd(fd_c)->getBufSaver());
+		getClientByFd(fd_c)->setBufSaver("", false);
+	}
+	else
+		buff.str(buf);
+
 	while(std::getline(buff, token_value, '\n'))
 		tokens_by_n.push_back(token_value);
 
-	for (int i2 = 0; i2 != static_cast<int>(tokens_by_n.size()) ; i2++)
+	for (int i = 0; i != static_cast<int>(tokens_by_n.size()) ; i++)
 	{
-		std::istringstream token_buf(tokens_by_n[i2]);
+		std::istringstream token_buf(tokens_by_n[i]);
 
 		while (std::getline(token_buf, token_value, ' '))
 		{
@@ -241,24 +267,24 @@ void Server::parseExec(int id, int fd_c, const std::string& buf)
 				while (std::getline(token_buf, token_value, ' '))
 					new_token += ' ' + token_value;
 				new_token.erase(0, 1);
-				if (verify_token(new_token))
+				if (verify_token(&token_value))
 					tokens.push_back(new_token);
 				break ;
 			}
 			else
 			{
-				if (verify_token(token_value))
+				if (verify_token(&token_value))
 					tokens.push_back(token_value);
 			}
 		}
 
 		if (!tokens.empty())
 		{
-			for (int i1 = 0; i1 != static_cast<int>(tokens[0].size()); i1++)
-				tokens[0][i1] = std::toupper(tokens[0][i1]);
+			for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
+				tokens[0][i] = std::toupper(tokens[0][i]);
 
-			for (i2 = 0; i2 != static_cast<int>(tokens.size()); i2++) //printing
-				std::cout << "Token[" << i2 << "]: |" << tokens[i2] << "|\r\n";
+			for (int i = 0; i != static_cast<int>(tokens.size()); i++) //printing
+				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";
 
 			if (tokens[0] == "JOIN")
 				join(fd_c, tokens);
@@ -270,8 +296,30 @@ void Server::parseExec(int id, int fd_c, const std::string& buf)
 				setpass(fd_c, tokens);
 			else if (tokens[0] == "USER")
 				setuser(fd_c, tokens);
+			else if (tokens[0] == "MODE")
+                mode(fd_c, tokens);
+			else if (tokens[0] == "INVITE")
+			    invite(fd_c, tokens);
+			else if (tokens[0] == "KICK")
+			    kick(fd_c, tokens);
+			else if (tokens[0] == "TOPIC")
+			    topic(fd_c, tokens);
+			else if (tokens[0] == "PING")
+			    ping_cmd(fd_c, tokens);
+			else if (tokens[0] == "PONG")
+			    pong_cmd(fd_c, tokens);
+            else if (tokens[0] == "QUIT")
+            {
+                if (tokens.size() > 1)
+                    quit(fd_c, tokens[1]);
+                else
+                    quit(fd_c, "");
+            }
 			else
 				std::cout << "Cmd not found." << std::endl;
+
+			Client* cc = getClientByFd(fd_c);
+            if (cc) cc->touch();
 			tokens.clear();
 		}
 	}
@@ -285,7 +333,8 @@ void Server::sendWelcomeBurst(int fd_c)
 	send(fd_c, msg.c_str(), msg.size(), 0);
 	msg = ":localhost 002 " + client->getNick() + " :Your host is localhost, running version " + VERSION + "\r\n";
 	send(fd_c, msg.c_str(), msg.size(), 0);
-	msg = ":localhost 003 " + client->getNick() + " :This server was created " + getServerStartTime() + "\r";
+	msg = ":localhost 003 " + client->getNick() + " :This server was created " + getServerStartTime();
+	if (!msg.empty() && msg[msg.size()-1] != '\n') msg += "\r\n";
 	send(fd_c, msg.c_str(), msg.size(), 0);
 	msg = ":localhost 004 " + client->getNick() + " localhost " + VERSION + " itkol\r\n";
 	send(fd_c, msg.c_str(), msg.size(), 0);
@@ -307,7 +356,7 @@ void Server::sendWelcomeBurst(int fd_c)
 }
 
 //*-----------[FREE STUFF]-----------*//
-void Server::closeFd() const
+void Server::closeFd()
 {
 	for (size_t i = 0; i < _clients.size() ; i++)
 		close(_clients[i].getFd());
@@ -315,7 +364,7 @@ void Server::closeFd() const
 		close(_server_socket_fd);
 }
 
-void Server::clearClient(const int fd)
+void Server::clearClient(int fd)
 {
 	for (size_t i = 0; i < _fds.size(); i++)
 	{
@@ -333,4 +382,109 @@ void Server::clearClient(const int fd)
 			break ;
 		}
 	}
+}
+
+int Server::fdByNick(const std::string& nick) {
+    for (size_t i = 0; i < _clients.size(); ++i)
+        if (_clients[i].getNick() == nick) return _clients[i].getFd();
+    return -1;
+}
+
+std::string Server::nickByFd(int fd) {
+    for (size_t i = 0; i < _clients.size(); ++i)
+        if (_clients[i].getFd() == fd) return _clients[i].getNick();
+    return "*";
+}
+
+std::string Server::userPrefix(int fd) {
+    // se não tiveres user real, usa placeholder
+    Client* c = NULL;
+    for (size_t i = 0; i < _clients.size(); ++i)
+        if (_clients[i].getFd() == fd) { c = &_clients[i]; break; }
+    std::string nick = c ? c->getNick() : "*";
+    std::string user = c ? c->getUser() : "~default";
+    return ":" + nick + "!" + user + "@localhost ";
+}
+
+void Server::sendNumeric(int fd, int code, const std::string& params, const std::string& trailing) {
+    Client* c = getClientByFd(fd);
+    std::ostringstream oss;
+    oss << ":localhost " << code << " " << (c ? c->getNick() : "*");
+    if (!params.empty()) oss << " " << params;
+    if (!trailing.empty()) oss << " :" << trailing;
+    oss << "\r\n";
+    std::string s = oss.str();
+    send(fd, s.c_str(), s.size(), 0);
+}
+
+void Server::ping_cmd(int fd_c, const std::vector<std::string>& cmd)
+{
+    // Cliente enviou PING → responde PONG com o mesmo token
+    // Formatos aceites: PING :token   |  PING token
+    if (cmd.size() < 2) {
+        // alguns servidores respondem com seu próprio nome; aqui devolvemos algo neutro
+        std::string msg = ":localhost PONG localhost :keepalive\r\n";
+        send(fd_c, msg.c_str(), msg.size(), MSG_NOSIGNAL);
+        return;
+    }
+    const std::string& token = cmd[1];
+    std::string reply = ":localhost PONG localhost :" + token + "\r\n";
+    send(fd_c, reply.c_str(), reply.size(), MSG_NOSIGNAL);
+
+    // Marca atividade
+    Client* c = getClientByFd(fd_c);
+    if (c) c->touch();
+}
+
+void Server::pong_cmd(int fd_c, const std::vector<std::string>& cmd)
+{
+    Client* c = getClientByFd(fd_c);
+    if (!c) return;
+
+    // Se veio token, valida; se não, só aceita e segue
+    if (!cmd.empty() && cmd.size() >= 2) {
+        // opcional: só limpar awaitingPong se o token bater certo
+        // if (c->lastPingToken() == cmd[1]) c->setAwaitingPong(false);
+        // else { /* podes logar um mismatch aqui */ }
+    }
+    // Para evitar kick injusto por timeout:
+    c->touch();
+    c->setAwaitingPong(false);
+}
+
+
+void Server::heartbeat()
+{
+    const time_t now = std::time(NULL);
+    const int idleBeforePing = 60;   // 60s sem atividade → manda PING
+    const int pongTimeout    = 30;   // se não responder em 30s → drop
+
+    for (size_t i = 0; i < _clients.size(); ++i) {
+        int cfd = _clients[i].getFd();
+
+        // Só sockets de clientes válidos; ignora o listening socket
+        if (cfd == _server_socket_fd) continue;
+
+        time_t last = _clients[i].getLastActivity();
+
+        if (!_clients[i].awaitingPong()) {
+            if (now - last >= idleBeforePing) {
+                // manda PING
+                std::ostringstream tok; tok << now; // token simples
+                std::string token = tok.str();
+                std::string msg = ":localhost PING :" + token + "\r\n";
+                send(cfd, msg.c_str(), msg.size(), MSG_NOSIGNAL);
+                _clients[i].setAwaitingPong(true);
+                _clients[i].setLastPingToken(token);
+            }
+        } else {
+            // já estamos a aguardar PONG
+            if (now - last >= idleBeforePing + pongTimeout) {
+                // não respondeu → fecha
+                std::cerr << "PING timeout on fd " << cfd << "\n";
+                quit(cfd, "Client disconnected\r\n");
+                // cuidado: _clients muda de tamanho; podes fazer i-- aqui ou iterar com while
+            }
+        }
+    }
 }
