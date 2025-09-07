@@ -2,6 +2,10 @@
 
 void Server::topic(int fd_c, const std::vector<std::string>& a)
 {
+    Client *client = getClientByFd(fd_c);
+    if (!client || !client->getAuth())
+    { return ; }
+
     if (a.size() < 2) { sendNumeric(fd_c, 461, "TOPIC", "Not enough parameters"); return; }
     const std::string& chan = a[1];
     Channel* ch = getChannel(chan);

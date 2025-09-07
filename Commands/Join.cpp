@@ -2,10 +2,9 @@
 
 void Server::join(int fd_c, std::vector<std::string> cmd)
 {
-    std::cout << "Entered Join" << std::endl;
-    Client *client = getClientByFd(fd_c);
-    if (!client)
-        return;
+	Client *client = getClientByFd(fd_c);
+    if (!client || !client->getAuth())
+	{ return ; }
 
     // 461 ERR_NEEDMOREPARAMS
     if (cmd.size() < 2) {

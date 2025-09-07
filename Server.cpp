@@ -204,8 +204,7 @@ void Server::receivedData(int id, int fd)
 	{
 		//aka disconnected client
 		std::cout << "Something happened to client." << std::endl;
-		clearClient(fd);
-		close(fd);
+        quit(fd, "Client disconnected.");
 	}
 	else
 	{
@@ -296,16 +295,25 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 				setpass(fd_c, tokens);
 			else if (tokens[0] == "USER")
 				setuser(fd_c, tokens);
-			else if (tokens[0] == "MODE")       mode(fd_c, tokens);
-			else if (tokens[0] == "INVITE")     invite(fd_c, tokens);
-			else if (tokens[0] == "KICK")       kick(fd_c, tokens);
-			else if (tokens[0] == "TOPIC")      topic(fd_c, tokens);
-
-			else if (tokens[0] == "PING") ping_cmd(fd_c, tokens);
-			else if (tokens[0] == "PONG") pong_cmd(fd_c, tokens);
-			// opcional:
-			// else if (tokens[0] == "PART")    part(fd_c, tokens);
-			// else if (tokens[0] == "NOTICE")  notice(fd_c, tokens);
+			else if (tokens[0] == "MODE")
+                mode(fd_c, tokens);
+			else if (tokens[0] == "INVITE")
+			    invite(fd_c, tokens);
+			else if (tokens[0] == "KICK")
+			    kick(fd_c, tokens);
+			else if (tokens[0] == "TOPIC")
+			    topic(fd_c, tokens);
+			else if (tokens[0] == "PING")
+			    ping_cmd(fd_c, tokens);
+			else if (tokens[0] == "PONG")
+			    pong_cmd(fd_c, tokens);
+            else if (tokens[0] == "QUIT")
+            {
+                if (tokens.size() > 1)
+                    quit(fd_c, tokens[1]);
+                else
+                    quit(fd_c, "");
+            }
 			else
 				std::cout << "Cmd not found." << std::endl;
 
@@ -473,8 +481,7 @@ void Server::heartbeat()
             if (now - last >= idleBeforePing + pongTimeout) {
                 // não respondeu → fecha
                 std::cerr << "PING timeout on fd " << cfd << "\n";
-                clearClient(cfd);
-                close(cfd);
+                quit(cfd, "Client disconnected");
                 // cuidado: _clients muda de tamanho; podes fazer i-- aqui ou iterar com while
             }
         }

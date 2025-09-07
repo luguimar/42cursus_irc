@@ -2,8 +2,11 @@
 
 void Server::privmsg(int fd_c, std::vector <std::string> cmd)
 {
-	std::string error_msg = ":localhost";
 	Client *client = getClientByFd(fd_c);
+    if (!client || !client->getAuth())
+	{ return ; }
+
+	std::string error_msg = ":localhost";
 
 	if (cmd.size() < 3)
 	{
