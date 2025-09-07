@@ -89,15 +89,19 @@ void Server::startServer(char *port)
 
 		for (size_t i = 0; i < _fds.size(); i++)
 		{
-			if (_fds[i].revents & POLLIN)
-			{
-				if (_fds[i].fd == _server_socket_fd)
-					newClient();
-				else
-					receivedData(i, _fds[i].fd);
+			if (_fds[i].revents & POLLIN) {
+			    if (_fds[i].fd == _server_socket_fd) newClient();
+			    else {
+			        receivedData(i, _fds[i].fd);
+			        // processa imediatamente após receber (sem depender de POLLOUT)
+			        Client* c = getClientByFd(_fds[i].fd);
+			        if (c)
+			        {
+				        parseExec(i, _fds[i].fd, c->getBuf());
+			        	c->setBuf("");
+			        }
+				}
 			}
-            else if (_fds[i].revents & POLLOUT)
-            	parseExec(i,_fds[i].fd, getClientByFd(_fds[i].fd)->getBuf());
 		}
 	}
 	closeFd();
@@ -203,7 +207,7 @@ void Server::receivedData(int id, int fd)
       	Client *client = getClientByFd(fd);
 		client->setBuf(buf);
 	}
-    _fds[id].events = POLLOUT;
+	_fds[id].events = POLLIN;
 }
 
 bool verify_token(std::string *token)
@@ -272,6 +276,13 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 				setpass(fd_c, tokens);
 			else if (tokens[0] == "USER")
 				setuser(fd_c, tokens);
+			else if (tokens[0] == "MODE")       mode(fd_c, tokens);
+			else if (tokens[0] == "INVITE")     invite(fd_c, tokens);
+			else if (tokens[0] == "KICK")       kick(fd_c, tokens);
+			else if (tokens[0] == "TOPIC")      topic(fd_c, tokens);
+			// opcional:
+			// else if (tokens[0] == "PART")    part(fd_c, tokens);
+			// else if (tokens[0] == "NOTICE")  notice(fd_c, tokens);
 			else
 				std::cout << "Cmd not found." << std::endl;
 			tokens.clear();
@@ -287,7 +298,8 @@ void Server::sendWelcomeBurst(int fd_c)
 	send(fd_c, msg.c_str(), msg.size(), 0);
 	msg = ":localhost 002 " + client->getNick() + " :Your host is localhost, running version " + VERSION + "\r\n";
 	send(fd_c, msg.c_str(), msg.size(), 0);
-	msg = ":localhost 003 " + client->getNick() + " :This server was created " + getServerStartTime() + "\r";
+	msg = ":localhost 003 " + client->getNick() + " :This server was created " + getServerStartTime();
+	if (!msg.empty() && msg[msg.size()-1] != '\n') msg += "\r\n";
 	send(fd_c, msg.c_str(), msg.size(), 0);
 	msg = ":localhost 004 " + client->getNick() + " localhost " + VERSION + " itkol\r\n";
 	send(fd_c, msg.c_str(), msg.size(), 0);
@@ -335,4 +347,37 @@ void Server::clearClient(int fd)
 			break ;
 		}
 	}
+}
+
+int Server::fdByNick(const std::string& nick) {
+    for (size_t i = 0; i < _clients.size(); ++i)
+        if (_clients[i].getNick() == nick) return _clients[i].getFd();
+    return -1;
+}
+
+std::string Server::nickByFd(int fd) {
+    for (size_t i = 0; i < _clients.size(); ++i)
+        if (_clients[i].getFd() == fd) return _clients[i].getNick();
+    return "*";
+}
+
+std::string Server::userPrefix(int fd) {
+    // se não tiveres user real, usa placeholder
+    Client* c = NULL;
+    for (size_t i = 0; i < _clients.size(); ++i)
+        if (_clients[i].getFd() == fd) { c = &_clients[i]; break; }
+    std::string nick = c ? c->getNick() : "*";
+    std::string user = c ? c->getUser() : "~default";
+    return ":" + nick + "!" + user + "@localhost ";
+}
+
+void Server::sendNumeric(int fd, int code, const std::string& params, const std::string& trailing) {
+    Client* c = getClientByFd(fd);
+    std::ostringstream oss;
+    oss << ":localhost " << code << " " << (c ? c->getNick() : "*");
+    if (!params.empty()) oss << " " << params;
+    if (!trailing.empty()) oss << " :" << trailing;
+    oss << "\r\n";
+    std::string s = oss.str();
+    send(fd, s.c_str(), s.size(), 0);
 }

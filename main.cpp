@@ -12,6 +12,7 @@ int main(int argc, char **argv)
 		{
 			signal(SIGINT, Server::SignalHandler);
 			signal(SIGQUIT, Server::SignalHandler);
+			std::signal(SIGPIPE, SIG_IGN);
 			server.setServerPass(argv[2]);
 			server.setServerStartTime(std::time(NULL));
 			server.startServer(argv[1]);
