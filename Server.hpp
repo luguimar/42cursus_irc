@@ -77,6 +77,7 @@ class Server
 		void	setnick(int fd_c, std::vector<std::string> cmd);
 		void	setpass(int fd_c, std::vector<std::string> cmd);
 		void	setuser(int fd_c, std::vector<std::string> cmd);
+		void	quit(int fd_c, std::string message);
 
 		//server auth message
 		void sendWelcomeBurst(int fd_c);

@@ -2,6 +2,10 @@
 
 void Server::kick(int fd_c, const std::vector<std::string>& a)
 {
+    Client *client = getClientByFd(fd_c);
+    if (!client || !client->getAuth())
+    { return ; }
+
     if (a.size() < 3) { sendNumeric(fd_c, 461, "KICK", "Not enough parameters"); return; }
     const std::string& chan = a[1];
     const std::string& nick = a[2];

@@ -104,9 +104,24 @@ void Client::setReal(std::string real)
 	_real = real;
 }
 
+
+std::string Client::getBufSaver()
+{
+	return _buf_saver;
+}
+
+void Client::setBufSaver(std::string buf, bool flag)
+{
+	if (flag)
+		_buf_saver += buf;
+	else
+		_buf_saver = buf;
+}
+
 time_t Client::getLastActivity() const { return _lastActivity; }
 void   Client::touch() { _lastActivity = std::time(NULL); }
 bool   Client::awaitingPong() const { return _awaitingPong; }
 void   Client::setAwaitingPong(bool v){ _awaitingPong = v; }
 const std::string& Client::lastPingToken() const { return _lastPingToken; }
 void   Client::setLastPingToken(const std::string& t){ _lastPingToken = t; }
+

@@ -2,10 +2,9 @@
 
 void Server::join(int fd_c, std::vector<std::string> cmd)
 {
-    std::cout << "Entered Join" << std::endl;
-    Client *client = getClientByFd(fd_c);
-    if (!client)
-        return;
+	Client *client = getClientByFd(fd_c);
+    if (!client || !client->getAuth())
+	{ return ; }
 
     // 461 ERR_NEEDMOREPARAMS
     if (cmd.size() < 2) {
@@ -93,7 +92,7 @@ void Server::join(int fd_c, std::vector<std::string> cmd)
         chan->clearInvite(client->getNick());
 
         // Prefixo do utilizador (se não tiveres user/host reais, usa placeholders)
-        const std::string prefix = ":" + client->getNick() + "!user@host ";
+        const std::string prefix = ":" + client->getNick() + "!" + client->getUser() + "@localhost ";
 
         // Broadcast do JOIN (inclui o próprio; é aceitável)
         {
@@ -101,11 +100,25 @@ void Server::join(int fd_c, std::vector<std::string> cmd)
             chan->broadcast(joinMsg, -1);
         }
 
+		//		//new_message = ":localhost 332" + client->getNick() + " " + chanName + ":Topic\r\n";
+		//send(fd_c, new_message.c_str(), new_message.size() , 0);
+		//:localhost 332 nick_c #channelname :"Topic"
+
+		// 332
+		{
+			if (!chan->getTopic().empty())
+			{
+				std::string message = ":localhost 332 " + client->getNick() + " " + chanName + " :" + chan->getTopic() + "\r\n";
+				send(fd_c, message.c_str(), message.size() , 0);
+			}
+		}
+
         // 353 RPL_NAMREPLY (enviado ao cliente que entrou)
         {
             std::string names = ":localhost 353 " + client->getNick() + " = " + chanName + " :";
             const std::set<int> &m = chan->getMembers();
-            for (std::set<int>::const_iterator it = m.begin(); it != m.end(); ++it) {
+            for (std::set<int>::const_iterator it = m.begin(); it != m.end(); ++it)
+			{
                 Client *cl = getClientByFd(*it);
                 if (!cl) continue;
                 if (chan->isOperator(*it)) names += "@";

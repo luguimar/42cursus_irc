@@ -4,8 +4,6 @@
 
 void Server::setuser(int fd_c, std::vector<std::string> cmd)
 {
-	std::cout << "Setting up username" << std::endl;
-
 	std::string	realname;
 	std::string	username;
 
