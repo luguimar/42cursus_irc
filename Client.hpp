@@ -18,6 +18,10 @@ class Client
 		std::string _buf_saver;
 		bool	_auth;
 
+		time_t      _lastActivity;  // atualiza em QUALQUER mensagem válida
+		bool        _awaitingPong;  // true quando o server manda PING
+	    std::string _lastPingToken;
+
 	public:
 		Client();
 		~Client();
@@ -49,6 +53,14 @@ class Client
 		std::string getBufSaver();
 		void setBufSaver(std::string buf, bool flag);
 		//bool, true = add,  false = reset
+
+	    time_t      getLastActivity() const;
+	    void        touch(); // atualiza para now
+	    bool        awaitingPong() const;
+	    void        setAwaitingPong(bool v);
+	    const std::string& lastPingToken() const;
+	    void        setLastPingToken(const std::string& t);
+
 };
 
 #endif

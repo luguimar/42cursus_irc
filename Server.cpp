@@ -103,6 +103,12 @@ void Server::startServer(char *port)
 				}
 			}
 		}
+		    static time_t lastBeat = 0;
+			time_t now = std::time(NULL);
+		    if (now - lastBeat >= 5) {
+		        heartbeat();          // manda PING a todos os clientes
+		        lastBeat = now;
+		    }
 	}
 	closeFd();
 }
@@ -294,11 +300,17 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 			else if (tokens[0] == "INVITE")     invite(fd_c, tokens);
 			else if (tokens[0] == "KICK")       kick(fd_c, tokens);
 			else if (tokens[0] == "TOPIC")      topic(fd_c, tokens);
+
+			else if (tokens[0] == "PING") ping_cmd(fd_c, tokens);
+			else if (tokens[0] == "PONG") pong_cmd(fd_c, tokens);
 			// opcional:
 			// else if (tokens[0] == "PART")    part(fd_c, tokens);
 			// else if (tokens[0] == "NOTICE")  notice(fd_c, tokens);
 			else
 				std::cout << "Cmd not found." << std::endl;
+
+			Client* cc = getClientByFd(fd_c);
+            if (cc) cc->touch();
 			tokens.clear();
 		}
 	}
@@ -394,4 +406,77 @@ void Server::sendNumeric(int fd, int code, const std::string& params, const std:
     oss << "\r\n";
     std::string s = oss.str();
     send(fd, s.c_str(), s.size(), 0);
+}
+
+void Server::ping_cmd(int fd_c, const std::vector<std::string>& cmd)
+{
+    // Cliente enviou PING → responde PONG com o mesmo token
+    // Formatos aceites: PING :token   |  PING token
+    if (cmd.size() < 2) {
+        // alguns servidores respondem com seu próprio nome; aqui devolvemos algo neutro
+        std::string msg = ":localhost PONG localhost :keepalive\r\n";
+        send(fd_c, msg.c_str(), msg.size(), MSG_NOSIGNAL);
+        return;
+    }
+    const std::string& token = cmd[1];
+    std::string reply = ":localhost PONG localhost :" + token + "\r\n";
+    send(fd_c, reply.c_str(), reply.size(), MSG_NOSIGNAL);
+
+    // Marca atividade
+    Client* c = getClientByFd(fd_c);
+    if (c) c->touch();
+}
+
+void Server::pong_cmd(int fd_c, const std::vector<std::string>& cmd)
+{
+    Client* c = getClientByFd(fd_c);
+    if (!c) return;
+
+    // Se veio token, valida; se não, só aceita e segue
+    if (!cmd.empty() && cmd.size() >= 2) {
+        // opcional: só limpar awaitingPong se o token bater certo
+        // if (c->lastPingToken() == cmd[1]) c->setAwaitingPong(false);
+        // else { /* podes logar um mismatch aqui */ }
+    }
+    // Para evitar kick injusto por timeout:
+    c->touch();
+    c->setAwaitingPong(false);
+}
+
+
+void Server::heartbeat()
+{
+    const time_t now = std::time(NULL);
+    const int idleBeforePing = 60;   // 60s sem atividade → manda PING
+    const int pongTimeout    = 30;   // se não responder em 30s → drop
+
+    for (size_t i = 0; i < _clients.size(); ++i) {
+        int cfd = _clients[i].getFd();
+
+        // Só sockets de clientes válidos; ignora o listening socket
+        if (cfd == _server_socket_fd) continue;
+
+        time_t last = _clients[i].getLastActivity();
+
+        if (!_clients[i].awaitingPong()) {
+            if (now - last >= idleBeforePing) {
+                // manda PING
+                std::ostringstream tok; tok << now; // token simples
+                std::string token = tok.str();
+                std::string msg = ":localhost PING :" + token + "\r\n";
+                send(cfd, msg.c_str(), msg.size(), MSG_NOSIGNAL);
+                _clients[i].setAwaitingPong(true);
+                _clients[i].setLastPingToken(token);
+            }
+        } else {
+            // já estamos a aguardar PONG
+            if (now - last >= idleBeforePing + pongTimeout) {
+                // não respondeu → fecha
+                std::cerr << "PING timeout on fd " << cfd << "\n";
+                clearClient(cfd);
+                close(cfd);
+                // cuidado: _clients muda de tamanho; podes fazer i-- aqui ou iterar com while
+            }
+        }
+    }
 }

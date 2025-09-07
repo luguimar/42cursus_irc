@@ -90,6 +90,11 @@ class Server
 		//cleaners
 		void	closeFd();
 		void	clearClient(int fd);
+
+
+		void ping_cmd(int fd_c, const std::vector<std::string>& cmd);
+		void pong_cmd(int fd_c, const std::vector<std::string>& cmd);
+		void heartbeat();
 };
 
 #endif
