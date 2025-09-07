@@ -43,6 +43,20 @@ class Server
 		Client *getClientByFd(int fd);
 		Client *getClientByNick(std::string nick);
 
+		int         fdByNick(const std::string& nick);
+		std::string nickByFd(int fd);
+		void        sendNumeric(int fd, int code, const std::string& params, const std::string& trailing);
+		std::string userPrefix(int fd); // ":nick!user@localhost "
+
+		void        mode(int fd_c, const std::vector<std::string>& cmd);
+		void        invite(int fd_c, const std::vector<std::string>& cmd);
+		void        kick(int fd_c, const std::vector<std::string>& cmd);
+		void        topic(int fd_c, const std::vector<std::string>& cmd);
+
+		// (opcional recomendado)
+		// void        part(int fd_c, const std::vector<std::string>& cmd);
+		// void        notice(int fd_c, const std::vector<std::string>& cmd);
+
 	public:
 		Server();
 		~Server();
