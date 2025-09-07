@@ -4,7 +4,7 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
 {
     Client *client = getClientByFd(fd_c);
     if (!client || !client->getAuth())
-    { return ; }
+	{ return ; }
 
     if (a.size() < 2) { sendNumeric(fd_c, 461, "MODE", "Not enough parameters"); return; }
     const std::string& target = a[1];
