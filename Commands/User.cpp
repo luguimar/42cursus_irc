@@ -4,10 +4,6 @@
 
 void Server::setuser(int fd_c, std::vector<std::string> cmd)
 {
-	Client *client = getClientByFd(fd_c);
-	if (!client || !client->getAuth())
-		return;
-
 	std::string	realname;
 	std::string	username;
 

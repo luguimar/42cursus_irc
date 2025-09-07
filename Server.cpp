@@ -98,7 +98,8 @@ void Server::startServer(char *port)
 			        if (c)
 			        {
 				        parseExec(i, _fds[i].fd, c->getBuf());
-			        	c->setBuf("");
+                        if (getClientByFd(_fds[i].fd))
+			        	    c->setBuf("");
 			        }
 				}
 			}
@@ -204,7 +205,7 @@ void Server::receivedData(int id, int fd)
 	{
 		//aka disconnected client
 		std::cout << "Something happened to client." << std::endl;
-        quit(fd, "Client disconnected.");
+        quit(fd, "Client disconnected.\r\n");
 	}
 	else
 	{
@@ -481,7 +482,7 @@ void Server::heartbeat()
             if (now - last >= idleBeforePing + pongTimeout) {
                 // não respondeu → fecha
                 std::cerr << "PING timeout on fd " << cfd << "\n";
-                quit(cfd, "Client disconnected");
+                quit(cfd, "Client disconnected\r\n");
                 // cuidado: _clients muda de tamanho; podes fazer i-- aqui ou iterar com while
             }
         }

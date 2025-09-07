@@ -3,7 +3,7 @@
 int main(int argc, char **argv)
 {
 	if (argc != 3)
-		std::cout << "Usage: ./ircserver <port> <pass>.\n" << std::endl;
+		std::cout << "Usage: ./ircserv <port> <pass>\n\r" << std::endl;
 	else
 	{
 		Server server;
