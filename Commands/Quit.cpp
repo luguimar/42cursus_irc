@@ -2,7 +2,6 @@
 
 void Server::quit(int fd_c, std::string message)
 {
-    std::cout << "ENTROU" << std::endl;
     Client *client = getClientByFd(fd_c);
     std::string quit_message = ":" + client->getNick() + "!" + client->getUser() + "@localhost QUIT :";
 
