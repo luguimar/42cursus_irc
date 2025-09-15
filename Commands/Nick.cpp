@@ -54,7 +54,7 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 	{
 		if (getClientByFd(fd_c)->getPass() != _server_pass)
 		{
-			std::string error_msg = ":localhost 462 " + getClientByFd(fd_c)->getNick() + " :Password incorrect\r\n";
+			std::string error_msg = ":localhost 464 " + getClientByFd(fd_c)->getNick() + " :Password incorrect\r\n";
 			send(fd_c, error_msg.c_str(), error_msg.size() , 0);
 			error_msg = "ERROR :Closing Link: localhost (Bad Password)\r\n";
 			send(fd_c, error_msg.c_str(), error_msg.size() , 0);

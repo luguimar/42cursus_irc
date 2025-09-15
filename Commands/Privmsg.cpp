@@ -45,6 +45,12 @@ void Server::privmsg(int fd_c, std::vector <std::string> cmd)
 			send(fd_c, error_msg.c_str(), error_msg.size(), 0);
 			return ;
 		}
+        else if (!(chan_target->hasMember(fd_c)))
+        {
+        	error_msg += " 404 " + client->getNick() + " " + target + " :Cannot send to channel\r\n";
+        	send(fd_c, error_msg.c_str(), error_msg.size(), 0);
+        	return ;
+        }
 		std::string new_message = ":" + client->getNick() + "!" + client->getUser() + "@localhost PRIVMSG " + target + " :" + message;
 		chan_target->broadcast(new_message, fd_c);
 	}
