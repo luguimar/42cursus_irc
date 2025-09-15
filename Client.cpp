@@ -8,8 +8,7 @@ Client::Client()
 	_user = "";
 	_real = "";
 	_password = "";
-    _auth = false;
-
+	_auth = false;
 	_lastActivity = std::time(NULL);
 	_awaitingPong = false;
 	_lastPingToken.clear();

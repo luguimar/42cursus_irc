@@ -20,7 +20,7 @@ class Client
 
 		time_t      _lastActivity;  // atualiza em QUALQUER mensagem válida
 		bool        _awaitingPong;  // true quando o server manda PING
-	    std::string _lastPingToken;
+		std::string _lastPingToken;
 
 	public:
 		Client();

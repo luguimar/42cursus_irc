@@ -64,10 +64,11 @@ bool   Channel::isFull() const { return hasLimit() && memberCount() >= _userLimi
 void Channel::broadcast(const std::string &msg, int exceptFd) const
 {
     for (std::set<int>::const_iterator it = _members.begin();
-         it != _members.end(); ++it)
+    it != _members.end(); ++it)
     {
         if (*it == exceptFd)
             continue;
-        send(*it, msg.c_str(), msg.length(), 0);
+        if (hasMember(*it))
+            send(*it, msg.c_str(), msg.length(), 0);
     }
 }

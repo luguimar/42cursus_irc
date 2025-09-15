@@ -205,7 +205,9 @@ void Server::receivedData(int id, int fd)
 	{
 		//aka disconnected client
 		std::cout << "Something happened to client." << std::endl;
-        quit(fd, "Client disconnected.\r\n");
+		quit(fd, "Client disconnected.\r\n");
+		clearClient(fd);
+		close(fd);
 	}
 	else
 	{

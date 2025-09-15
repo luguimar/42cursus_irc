@@ -19,6 +19,4 @@ void Server::quit(int fd_c, std::string message)
             _channels[i].removeMember(fd_c);
         }
     }
-    clearClient(fd_c);
-    close(fd_c);
 }

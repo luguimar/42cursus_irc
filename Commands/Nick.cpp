@@ -26,10 +26,13 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 		error_msg = ":localhost 431 " + client->getNick() + " :No nickname given\r\n";
 		return (void)send(fd_c, error_msg.c_str(), error_msg.size(), 0);
 	}
-	if (client->getNick() == cmd[1])
+	for (size_t i = 0; i < _clients.size(); i++)
 	{
-		error_msg = ":localhost 433 " + client->getNick() + " " + cmd[1] + " :Nickname is already in use\r\n";
-		return (void)send(fd_c, error_msg.c_str(), error_msg.size(), 0);
+		if (_clients[i].getNick() == cmd[1])
+		{
+			error_msg = ":localhost 433 " + client->getNick() + " " + cmd[1] + " :Nickname is already in use\r\n";
+			return (void)send(fd_c, error_msg.c_str(), error_msg.size(), 0);
+		}
 	}
 	if (check_nick(cmd[1].c_str()))
 	{
@@ -44,6 +47,11 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 			{
 				std::string msg = ":" + _clients[i].getNick() + "!" + _clients[i].getUser() + "@localhost NICK :" + cmd[1] + "\r\n";
 				send(fd_c, msg.c_str(), msg.size(), 0);
+				for (size_t i = 0; i < _channels.size(); i++)
+				{
+					if (_channels[i].hasMember(fd_c))
+						_channels[i].broadcast(msg, fd_c);
+				}
 			}
 			_clients[i].setNick(cmd[1]);
 		}
