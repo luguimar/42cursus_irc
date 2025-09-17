@@ -14,9 +14,14 @@ void Server::quit(int fd_c, std::string message)
     {
         if (_channels[i].hasMember(fd_c))
         {
-            _channels[i].broadcast(quit_message, fd_c);
             _channels[i].removeMember(fd_c);
+            _channels[i].removeOperator(fd_c);
+            _channels[i].clearInvite(client->getNick());
+
+            _channels[i].broadcast(quit_message, fd_c);
         }
+        if (_channels[i].getMembers().empty())
+            _channels.erase(_channels.begin() + i);
     }
     clearClient(fd_c);
     close(fd_c);
