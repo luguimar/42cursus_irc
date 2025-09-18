@@ -19,7 +19,6 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 {
 	std::string	error_msg;
 	Client *client = getClientByFd(fd_c);
-	std::cout << "Setting up nickname" << std::endl;
 
 	if (cmd.size() < 2)
 	{

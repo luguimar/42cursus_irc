@@ -64,15 +64,32 @@ void Server::setServerStartTime(std::time_t time)
 void Server::SignalHandler(int signum)
 {
 	(void)signum;
-	std::cout << "Closing server." << std::endl;
+	std::cout << "Closing server (due to signal caught)." << std::endl;
 	_server_live = true;
 }
 
 //*-----------[SERVER STUFF]-----------*//
+
+void Server::verifyChannels()
+{
+	if (!(_channels.empty()))
+	{
+		for (size_t i = 0; i < _channels.size(); ++i)
+		{
+			std::set<int> members = _channels[i].getMembers();
+			if (members.empty())
+			{
+				_channels.erase(_channels.begin() + i);
+				i--;
+			}
+		}
+	}
+}
+
 void Server::startServer(char *port)
 {
 	for (size_t i = 0; port[i]; i++)
-		if (isalnum(port[i]) == 0)
+		if (isdigit(port[i]) == 0)
 			throw(std::runtime_error("Please try to use only numbers for the port."));
 
 	_server_port = std::atoi(port);
@@ -85,7 +102,7 @@ void Server::startServer(char *port)
 	{
 
 		if (poll(_fds.data(), _fds.size(), -1) == -1 && Server::_server_live == false)
-			throw(std::runtime_error("The machine heart stopped."));
+			throw(std::runtime_error("Poll is not polling."));
 
 		for (size_t i = 0; i < _fds.size(); i++)
 		{
@@ -106,7 +123,8 @@ void Server::startServer(char *port)
 		}
 		    static time_t lastBeat = 0;
 			time_t now = std::time(NULL);
-		    if (now - lastBeat >= 5) {
+		    if (now - lastBeat >= 5)
+            {
 		        heartbeat();          // manda PING a todos os clientes
 		        lastBeat = now;
 		    }
@@ -172,13 +190,13 @@ void Server::newClient()
 
 	if (client_fd == -1)
 	{
-		std::cout << "While trying to make a stable connection it crashed" << std::endl;
+		std::cout << "Problem while trying to make a stable connection with client." << std::endl;
 		return;
 	}
 
 	if (fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1) //ja esta explicado em cima a razao de fazermos isto e a mesma logica (linha 43, server.cpp)
 	{
-		std::cout << "Problem when trying to set status flags of the socket as \"O_NONBLOCK\". (for client_fd)" << std::endl;
+		std::cout << "Problem when trying to set status flags of the client socket as \"O_NONBLOCK\"." << std::endl;
 		return;
 	}
 
@@ -191,7 +209,7 @@ void Server::newClient()
 	client.setIp(inet_ntoa((client_adr.sin_addr)));	//guardar o ip na estrutura do client (a funcao inet_ntoa() pega num adress/ip e transforma num string e devolve)
 	_clients.push_back(client);							//guardar novo client no vector dos clients
 	_fds.push_back(new_poll);							//guardar novo poll para vigiar
-	std::cout << "New Client" << std::endl;
+	std::cout << "New Client [" << client_fd << "]." << std::endl;
 }
 
 void Server::receivedData(int id, int fd)
@@ -203,8 +221,7 @@ void Server::receivedData(int id, int fd)
 
 	if (data_bytes <= 0)
 	{
-		//aka disconnected client
-		std::cout << "Something happened to client." << std::endl;
+		std::cout << "Something happened to client [" << fd << "]." << std::endl;
         quit(fd, "Client disconnected.\r\n");
 	}
 	else
@@ -283,8 +300,9 @@ void Server::parseExec(int id, int fd_c, std::string buf)
 			for (int i = 0; i != static_cast<int>(tokens[0].size()); i++)
 				tokens[0][i] = std::toupper(tokens[0][i]);
 
-			for (int i = 0; i != static_cast<int>(tokens.size()); i++) //printing
-				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";
+			/*for (int i = 0; i != static_cast<int>(tokens.size()); i++)
+				std::cout << "Token[" << i << "]: |" << tokens[i] << "|\r\n";*/
+            std::cout << "Received [" << tokens[0] << "] CMD from " << getClientByFd(fd_c)->getNick() << " [" << fd_c << "]."<< std::endl;
 
 			if (tokens[0] == "JOIN")
 				join(fd_c, tokens);
@@ -316,7 +334,9 @@ void Server::parseExec(int id, int fd_c, std::string buf)
                     quit(fd_c, "");
             }
 			else
-				std::cout << "Cmd not found." << std::endl;
+				std::cout << "Cmd [" << tokens[0] << "] not found." << std::endl;
+
+            verifyChannels();
 
 			Client* cc = getClientByFd(fd_c);
             if (cc) cc->touch();
@@ -482,7 +502,7 @@ void Server::heartbeat()
             if (now - last >= idleBeforePing + pongTimeout) {
                 // não respondeu → fecha
                 std::cerr << "PING timeout on fd " << cfd << "\n";
-                quit(cfd, "Client disconnected\r\n");
+                quit(cfd, "Client disconnected.\r\n");
                 // cuidado: _clients muda de tamanho; podes fazer i-- aqui ou iterar com while
             }
         }

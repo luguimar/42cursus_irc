@@ -53,6 +53,7 @@ class Server
 		void        kick(int fd_c, const std::vector<std::string>& cmd);
 		void        topic(int fd_c, const std::vector<std::string>& cmd);
 
+        void        verifyChannels();
 		// (opcional recomendado)
 		// void        part(int fd_c, const std::vector<std::string>& cmd);
 		// void        notice(int fd_c, const std::vector<std::string>& cmd);

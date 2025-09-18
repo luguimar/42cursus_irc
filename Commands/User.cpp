@@ -19,8 +19,6 @@ int	check_user(const char *nick)
 
 void Server::setuser(int fd_c, std::vector<std::string> cmd)
 {
-	std::cout << "Setting up username" << std::endl;
-
 	std::string	error_msg;
 	std::string	realname;
 	const char	*username;

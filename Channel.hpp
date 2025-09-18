@@ -22,7 +22,7 @@ class Channel
 
 	public:
         Channel(const std::string &name)
-        : _name(name), _inviteOnly(false), _topicLocked(false),
+        : _name(name), _members(), _operators(), _inviteOnly(false), _topicLocked(false),
           _key(""), _userLimit(0), _topic("") {}
 
 		const std::string   &getName() const;
@@ -65,6 +65,8 @@ class Channel
         bool   isFull() const;
 		/** Envia msg a todos os membros excepto quem a enviou */
 		void broadcast(const std::string &msg, int exceptFd = -1) const;
+
+		~Channel();
 };
 
 #endif
