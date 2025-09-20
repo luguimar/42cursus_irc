@@ -93,6 +93,8 @@ void Server::startServer(char *port)
 			throw(std::runtime_error("Please try to use only numbers for the port."));
 
 	_server_port = std::atoi(port);
+	if (_server_port < 1024 || _server_port > 65535)
+		throw(std::runtime_error("Please try to use a port between 1024 and 65535."));
 
 	startSocket();
 
