@@ -18,6 +18,6 @@ void Server::setpass(int fd_c, std::vector <std::string> cmd)
 		send(fd_c, error_msg.c_str(), error_msg.size() , 0);
 		return ;
 	}
-    else
-    	client->setPass(cmd.at(1));
+	else
+	    client->setPass(cmd.at(1));
 }

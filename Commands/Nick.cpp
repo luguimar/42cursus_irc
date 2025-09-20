@@ -55,8 +55,6 @@ void Server::setnick(int fd_c, std::vector<std::string> cmd)
 			_clients[i].setNick(cmd[1]);
 		}
 	}
-	// falta mandar a mensagem de sucesso pro server
-
 	if (getClientByFd(fd_c)->getUser() != "~default" && !getClientByFd(fd_c)->getAuth())
 	{
 		if (getClientByFd(fd_c)->getPass() != _server_pass)

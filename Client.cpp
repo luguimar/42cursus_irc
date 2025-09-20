@@ -8,7 +8,7 @@ Client::Client()
 	_user = "";
 	_real = "";
 	_password = "";
-    _auth = false;
+	_auth = false;
 
 	_lastActivity = std::time(NULL);
 	_awaitingPong = false;
@@ -43,7 +43,7 @@ void Client::setIp(std::string ip)
 std::string Client::getNick()
 {
 	if (_nick == "")
-          return "*";
+		return "*";
 	return _nick;
 }
 
@@ -124,4 +124,3 @@ bool   Client::awaitingPong() const { return _awaitingPong; }
 void   Client::setAwaitingPong(bool v){ _awaitingPong = v; }
 const std::string& Client::lastPingToken() const { return _lastPingToken; }
 void   Client::setLastPingToken(const std::string& t){ _lastPingToken = t; }
-

@@ -23,15 +23,14 @@
 #define NETWORK_NAME "IrrationalRelayCreation"
 #define VERSION "1.7.7"
 
-class Channel; // forward declaration
-class Client;  // forward declaration
+class Channel;
+class Client;
 
-//server class
 class Server
 {
 	private:
-		int	_server_port;		//-> port do server | exemplo: 8080 ( desde que esteja neste intervalo nao dara problemas (em principio) 1024 to 49151)
-		int	_server_socket_fd;	//-> fd que o socket devolve
+		int	_server_port;
+		int	_server_socket_fd;
 		static bool _server_live;
 		std::vector<Client> _clients;
 		std::vector<struct pollfd> _fds;
@@ -54,9 +53,6 @@ class Server
 		void        topic(int fd_c, const std::vector<std::string>& cmd);
 
         void        verifyChannels();
-		// (opcional recomendado)
-		// void        part(int fd_c, const std::vector<std::string>& cmd);
-		// void        notice(int fd_c, const std::vector<std::string>& cmd);
 
 	public:
 		Server();

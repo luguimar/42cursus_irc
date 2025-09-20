@@ -9,7 +9,7 @@ class Channel
 {
 	private:
 		std::string     _name;
-		std::set<int>   _members;      // guardamos apenas os fd’s; tudo o resto vive no vector _clients do Server
+		std::set<int>   _members;
 		std::set<int>   _operators;
 
         // --- NOVOS ESTADOS (para MODE/TOPIC/INVITE) ---
@@ -63,8 +63,7 @@ class Channel
         void   setUserLimit(size_t lim);
         void   clearUserLimit();
         bool   isFull() const;
-		/** Envia msg a todos os membros excepto quem a enviou */
-		void broadcast(const std::string &msg, int exceptFd = -1) const;
+	void broadcast(const std::string &msg, int exceptFd = -1) const;
 };
 
 #endif

@@ -22,7 +22,6 @@ void Server::invite(int fd_c, const std::vector<std::string>& a)
     ch->addInvite(nick);
     sendNumeric(fd_c, 341, nick + " " + chan, ""); // RPL_INVITING
 
-    // envia INVITE ao alvo
     std::string m = userPrefix(fd_c) + "INVITE " + nick + " " + chan + "\r\n";
     send(tfd, m.c_str(), m.size(), 0);
 }

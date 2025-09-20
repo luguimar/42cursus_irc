@@ -11,17 +11,14 @@ void Server::topic(int fd_c, const std::vector<std::string>& a)
     Channel* ch = getChannel(chan);
     if (!ch) { sendNumeric(fd_c, 403, chan, "No such channel"); return; }
 
-    // consulta
     if (a.size() == 2) {
         if (ch->getTopic().empty()) sendNumeric(fd_c, 331, chan, "No topic is set");
         else sendNumeric(fd_c, 332, chan, ch->getTopic());
         return;
     }
 
-    // alteração
     if (ch->isTopicLocked() && !ch->isOperator(fd_c)) { sendNumeric(fd_c, 482, chan, "You're not channel operator"); return; }
 
-    // junta trailing a partir de a[2] (já vem sem ':', pela tua parse)
     std::string newTopic = a[2];
     ch->setTopic(newTopic);
 

@@ -4,12 +4,11 @@
 #include "Server.hpp"
 #include <string>
 
-//_c something of client
 class Client
 {
 	private:
-		int	_fd;		 	//fd do client ou neste caso o fd que representa a socket do cliente ligada so servidor (server.cpp, newClient()) mas sobre
-		std::string _ip; 	//ip do cliente outraves (server.cpp, newClient())
+		int	_fd;
+		std::string _ip;
 		std::string _nick;
 		std::string _user;
 		std::string _real;
@@ -18,9 +17,9 @@ class Client
 		std::string _buf_saver;
 		bool	_auth;
 
-		time_t      _lastActivity;  // atualiza em QUALQUER mensagem válida
-		bool        _awaitingPong;  // true quando o server manda PING
-	    std::string _lastPingToken;
+		time_t      _lastActivity;
+		bool        _awaitingPong;
+		std::string _lastPingToken;
 
 	public:
 		Client();
@@ -52,15 +51,13 @@ class Client
 
 		std::string getBufSaver();
 		void setBufSaver(std::string buf, bool flag);
-		//bool, true = add,  false = reset
 
-	    time_t      getLastActivity() const;
-	    void        touch(); // atualiza para now
-	    bool        awaitingPong() const;
-	    void        setAwaitingPong(bool v);
-	    const std::string& lastPingToken() const;
-	    void        setLastPingToken(const std::string& t);
-
+		time_t      getLastActivity() const;
+		void        touch();
+		bool        awaitingPong() const;
+		void        setAwaitingPong(bool v);
+		const std::string& lastPingToken() const;
+		void        setLastPingToken(const std::string& t);
 };
 
 #endif

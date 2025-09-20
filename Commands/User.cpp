@@ -32,8 +32,6 @@ void Server::setuser(int fd_c, std::vector<std::string> cmd)
 		error_msg += " :Not enough parameters";
 		return (void)send(fd_c, error_msg.c_str(), error_msg.size(), 0);
 	}
-//	if ((cmd[2] != "0" && cmd[2] != "*") || (cmd[3] != "0" && cmd[3] != "*"))
-//		return ;
 	if (cmd[1].size() > USERLEN)
 		cmd[1] = (cmd[1].substr(0, USERLEN) + ".");
 	username = cmd[1].c_str();
@@ -55,7 +53,6 @@ void Server::setuser(int fd_c, std::vector<std::string> cmd)
 		}
 	}
 
-	//esta parte e a tal autenticacao
 	if (getClientByFd(fd_c)->getNick() != "*" && !getClientByFd(fd_c)->getAuth())
 	{
 		if (getClientByFd(fd_c)->getPass() != _server_pass)
