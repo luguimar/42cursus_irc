@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+# Configurações do CLion/IntelliJ
+.idea/
