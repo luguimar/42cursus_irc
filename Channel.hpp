@@ -65,8 +65,6 @@ class Channel
         bool   isFull() const;
 		/** Envia msg a todos os membros excepto quem a enviou */
 		void broadcast(const std::string &msg, int exceptFd = -1) const;
-
-		~Channel();
 };
 
 #endif

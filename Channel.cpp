@@ -71,9 +71,3 @@ void Channel::broadcast(const std::string &msg, int exceptFd) const
         send(*it, msg.c_str(), msg.length(), 0);
     }
 }
-
-Channel::~Channel()
-{
-	//_members.clear();
-	//_operators.clear();
-}

@@ -2,7 +2,6 @@
 
 void Server::mode(int fd_c, const std::vector<std::string>& a)
 {
-    int x = 0;
     Client *client = getClientByFd(fd_c);
     if (!client || !client->getAuth())
 	{ return ; }
@@ -15,7 +14,6 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
     Channel* ch = getChannel(target);
     if (!ch) { sendNumeric(fd_c, 403, target, "No such channel"); return; }
 
-    // Sem args → devolve modos atuais
     if (a.size() == 2) {
         std::string modes = "+";
         if (ch->isInviteOnly()) modes += 'i';
@@ -29,44 +27,53 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
         return;
     }
 
-    // Alterar modos → precisa ser operador
     if (!ch->isOperator(fd_c)) { sendNumeric(fd_c, 482, target, "You're not channel operator"); return; }
 
     const std::string& modeSeq = a[2];
     bool adding = true; size_t argi = 3;
-    for (size_t i = 0; i < modeSeq.size(); ++i) {
+    std::string flags;
+    std::string target2;
+    for (size_t i = 0; i < modeSeq.size(); ++i)
+    {
+        int x = 0;
+        //std::string target2 = " ";
         char m = modeSeq[i];
-        if (m == '+' && i == 0) { adding = true; continue; }
-        else if (m == '-' && i == 0) { adding = false; continue; }
-        else if (i == 0)
+
+        if (m == '+' && i == 0) { adding = true; flags += " +" ; continue; }
+        else if (m == '-' && i == 0) { adding = false; flags += " -"; continue; }
+        else if (i == 0 || modeSeq.size() == 1)
+            return ;
+
+        switch (m)
         {
-            x = 1;
-            break;
-        }
-        switch (m) {
             case 'i': ch->setInviteOnly(adding); break;
             case 't': ch->setTopicLocked(adding); break;
             case 'k':
                 if (adding) {
-                    if (argi >= a.size()) { sendNumeric(fd_c, 461, "MODE", "Not enough parameters"); return; }
+                    if (argi >= a.size()) { sendNumeric(fd_c, 461, "MODE", "Not enough parameters"); x = 1; return; }
+                    target2 += " " + a[argi];
                     ch->setKey(a[argi++]);
                 } else ch->clearKey();
                 break;
             case 'l':
                 if (adding) {
-                    if (argi >= a.size()) { sendNumeric(fd_c, 461, "MODE", "Not enough parameters"); return; }
+                    if (argi >= a.size()) { sendNumeric(fd_c, 461, "MODE", "Not enough parameters"); x = 1; return; }
+                    target2 += " " + a[argi];
                     size_t lim = static_cast<size_t>(std::max(0, atoi(a[argi++].c_str())));
                     ch->setUserLimit(lim);
                 } else ch->clearUserLimit();
                 break;
             case 'o':
-                if (argi >= a.size()) { sendNumeric(fd_c, 461, "MODE", "Not enough parameters"); return; }
+                if (argi >= a.size()) { sendNumeric(fd_c, 461, "MODE", "Not enough parameters"); x = 1; return; }
                 {
+                    std::string temp = a[argi];
                     int tfd = fdByNick(a[argi++]);
                     if (tfd < 0 || !ch->hasMember(tfd)) {
                         sendNumeric(fd_c, 441, a[argi-1] + " " + ch->getName(), "They aren't on that channel");
+                        x = 1;
                         break;
                     }
+                    target2 += " " + temp;
                     if (adding) ch->makeOperator(tfd); else ch->removeOperator(tfd);
                 }
                 break;
@@ -75,12 +82,36 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
                 x = 1;
                 break;
         }
+        if (x == 0)
+            flags += m;
+        /*if (x == 0)
+        {
+            std::string msg = userPrefix(fd_c) + "MODE " + target;
+            if (adding == true)
+                msg += " +";
+            else
+                msg += " -";
+            msg += m;
+            if (m == 'l' || m == 'o' || m == 'k')
+            {
+                msg += " ";
+                msg += target2.c_str();
+            }
+            msg += "\r\n";
+            getChannel(target)->broadcast(msg, -1);
+        }*/
     }
-
-    // Broadcast da mudança de modos
-    if (x) exit;
-    std::string msg = userPrefix(fd_c) + "MODE " + target;
-    for (size_t i = 2; i < a.size(); ++i) { msg += " " + a[i]; }
+    std::string msg = userPrefix(fd_c) + "MODE " + target + flags;
+    if (!target2.empty())
+        msg += target2;
     msg += "\r\n";
+
+
+    /*for (std::size_t i = 0; i < msg.size(); ++i) {
+        unsigned char c = msg[i];
+        std::cout << c << " = " << std::hex << std::setw(2) << std::setfill('0')
+                  << static_cast<int>(c) << " \r\n";
+    }*/
+
     getChannel(target)->broadcast(msg, -1);
 }
