@@ -2,6 +2,7 @@
 
 void Server::mode(int fd_c, const std::vector<std::string>& a)
 {
+    int x = 0;
     Client *client = getClientByFd(fd_c);
     if (!client || !client->getAuth())
 	{ return ; }
@@ -35,8 +36,13 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
     bool adding = true; size_t argi = 3;
     for (size_t i = 0; i < modeSeq.size(); ++i) {
         char m = modeSeq[i];
-        if (m == '+') { adding = true; continue; }
-        if (m == '-') { adding = false; continue; }
+        if (m == '+' && i == 0) { adding = true; continue; }
+        else if (m == '-' && i == 0) { adding = false; continue; }
+        else if (i == 0)
+        {
+            x = 1;
+            break;
+        }
         switch (m) {
             case 'i': ch->setInviteOnly(adding); break;
             case 't': ch->setTopicLocked(adding); break;
@@ -64,11 +70,15 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
                     if (adding) ch->makeOperator(tfd); else ch->removeOperator(tfd);
                 }
                 break;
-            default: sendNumeric(fd_c, 472, std::string(1, m), "is unknown mode char to me"); break;
+            default:
+                sendNumeric(fd_c, 472, std::string(1, m), "is unknown mode char to me");
+                x = 1;
+                break;
         }
     }
 
     // Broadcast da mudança de modos
+    if (x) exit;
     std::string msg = userPrefix(fd_c) + "MODE " + target;
     for (size_t i = 2; i < a.size(); ++i) { msg += " " + a[i]; }
     msg += "\r\n";
