@@ -14,6 +14,7 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
     Channel* ch = getChannel(target);
     if (!ch) { sendNumeric(fd_c, 403, target, "No such channel"); return; }
 
+    if (!ch->hasMember(fd_c)) { sendNumeric(fd_c, 442, target, "You're not on that channel"); return; }
     if (a.size() == 2) {
         std::string modes = "+";
         if (ch->isInviteOnly()) modes += 'i';

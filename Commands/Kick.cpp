@@ -13,6 +13,7 @@ void Server::kick(int fd_c, const std::vector<std::string>& a)
 
     Channel* ch = getChannel(chan);
     if (!ch) { sendNumeric(fd_c, 403, chan, "No such channel"); return; }
+    if (!ch->hasMember(fd_c)) { sendNumeric(fd_c, 442, chan, "You're not on that channel"); return; }
     if (!ch->isOperator(fd_c)) { sendNumeric(fd_c, 482, chan, "You're not channel operator"); return; }
 
     int tfd = fdByNick(nick);
