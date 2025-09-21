@@ -90,10 +90,7 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
                 msg += " -";
             msg += m;
             if (m == 'l' || m == 'o' || m == 'k')
-            {
-                msg += " ";
                 msg += target2.c_str();
-            }
             msg += "\r\n";
             getChannel(target)->broadcast(msg, -1);
         }
