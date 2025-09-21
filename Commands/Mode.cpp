@@ -32,15 +32,14 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
 
     const std::string& modeSeq = a[2];
     bool adding = true; size_t argi = 3;
-    std::string flags;
-    std::string target2;
     for (size_t i = 0; i < modeSeq.size(); ++i)
     {
         int x = 0;
+		std::string target2;
         char m = modeSeq[i];
 
-        if (m == '+' && i == 0) { adding = true; flags += " +" ; continue; }
-        else if (m == '-' && i == 0) { adding = false; flags += " -"; continue; }
+        if (m == '+' && i == 0) { adding = true;  continue; }
+        else if (m == '-' && i == 0) { adding = false; continue; }
         else if (i == 0 || modeSeq.size() == 1)
             return ;
 
@@ -82,12 +81,21 @@ void Server::mode(int fd_c, const std::vector<std::string>& a)
                 x = 1;
                 break;
         }
-        if (x == 0)
-            flags += m;
+		if (x == 0)
+        {
+            std::string msg = userPrefix(fd_c) + "MODE " + target;
+            if (adding)
+                msg += " +";
+            else
+                msg += " -";
+            msg += m;
+            if (m == 'l' || m == 'o' || m == 'k')
+            {
+                msg += " ";
+                msg += target2.c_str();
+            }
+            msg += "\r\n";
+            getChannel(target)->broadcast(msg, -1);
+        }
     }
-    std::string msg = userPrefix(fd_c) + "MODE " + target + flags;
-    if (!target2.empty())
-        msg += target2;
-    msg += "\r\n";
-    getChannel(target)->broadcast(msg, -1);
 }
